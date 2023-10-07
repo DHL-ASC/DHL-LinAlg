@@ -53,6 +53,16 @@ namespace bla
             return *this;
         }
 
+        Matrix<T, ORD> Transpose()
+        {
+            Matrix<T, ORD> trans(this->NumCols(), this->NumRows());
+
+            for (size_t i = 0; i < this->NumRows(); i++)
+                for (size_t j = 0; j < this->NumCols(); j++)
+                    trans(j, i) = (*this)(i, j);
+            return trans;
+        }
+
         size_t NumRows() const { return rows_; }
         size_t NumCols() const { return cols_; }
         size_t DataSize() const { return rows_ * cols_; }
@@ -131,7 +141,7 @@ namespace bla
     template <typename T, ORDERING ORD>
     Vector<T> operator*(const Vector<T> &b, const Matrix<T, ORD> &a)
     {
-        return a * b
+        return a * b;
     }
 
     template <typename T, ORDERING ORD>
