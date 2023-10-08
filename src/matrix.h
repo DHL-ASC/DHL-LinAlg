@@ -4,7 +4,6 @@
 #include <iostream>
 #include <memory> //for shared_ptr
 
-#include "shape.h"
 #include "vector.h"
 
 namespace bla
@@ -33,9 +32,6 @@ namespace bla
         {
             isTransposed_ = isTransposed ? false : true;
         }
-
-        Matrix(Shape shape) : Matrix(shape.NumRows(), shape.NumCols()) { ; }
-
         Matrix(const Matrix &m) : Matrix(m.NumRows(), m.NumCols()) { *this = m; }
 
         Matrix(Matrix &&m) : rows_{0}, cols_{0}, data_(nullptr)
@@ -74,7 +70,6 @@ namespace bla
         size_t NumRows() const { return rows_; }
         size_t NumCols() const { return cols_; }
         size_t DataSize() const { return rows_ * cols_; }
-        const Shape &Shape() const { return Shape(NumRows(), NumCols()); }
         T &operator()(size_t i) { return data_[i]; }
         const T &operator()(size_t i) const { return data_[i]; }
         T &operator()(size_t i, size_t j)
