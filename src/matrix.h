@@ -2,6 +2,7 @@
 #define FILE_Matrix_H
 
 #include <iostream>
+#include <memory> //for shared_ptr
 
 #include "shape.h"
 #include "vector.h"
@@ -18,9 +19,8 @@ namespace bla
     class Matrix
     {
         size_t rows_, cols_;
-        T *data_;
+        std::shared_ptr<T[]> data_;
         bool isTransposed_ = false;
-        bool delData_ = true;    //TODO: use shared pointer for data to avoid transposed matrix freeing data vector without "del" variable.
 
     public:
         Matrix(size_t rows, size_t cols)
@@ -28,10 +28,10 @@ namespace bla
         {
         }
 
-        Matrix(size_t rows, size_t cols, T* data, bool isTransposed)
-            : rows_(rows), cols_(cols), data_(data),delData_(false)
+        Matrix(size_t rows, size_t cols, std::shared_ptr<T[]> data, bool isTransposed)
+            : rows_(rows), cols_(cols), data_(data)
         {
-            isTransposed_ = isTransposed?false:true;
+            isTransposed_ = isTransposed ? false : true;
         }
 
         Matrix(Shape shape) : Matrix(shape.NumRows(), shape.NumCols()) { ; }
@@ -45,13 +45,7 @@ namespace bla
             std::swap(data_, m.data_);
         }
 
-        ~Matrix() 
-        { 
-            if(DelData())
-            {
-                delete[] data_;
-            } 
-        }
+        ~Matrix() {}
 
         Matrix &operator=(const Matrix &v2)
         {
@@ -74,9 +68,8 @@ namespace bla
             return trans;
         }
 
-        bool DelData() const{return delData_;}
-        T* Data() { return data_; }
-        const T* Data() const { return data_; }
+        std::shared_ptr<T[]> Data() { return data_; }
+        std::shared_ptr<const T[]> Data() const { return data_; }
         bool IsTransposed() const { return isTransposed_; }
         size_t NumRows() const { return rows_; }
         size_t NumCols() const { return cols_; }
@@ -88,22 +81,22 @@ namespace bla
         {
             if (ORD == RowMajor)
             {
-                return IsTransposed()?Data()[j * NumCols() + i]:Data()[i * NumCols() + j];
+                return IsTransposed() ? Data()[j * NumCols() + i] : Data()[i * NumCols() + j];
             }
             else
             {
-                return IsTransposed()?Data()[j + i * NumRows()]:Data()[i + j * NumRows()];
+                return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
         }
         const T &operator()(size_t i, size_t j) const
         {
             if (ORD == RowMajor)
             {
-                return IsTransposed()?Data()[j * NumCols() + i]:Data()[i * NumCols() + j];
+                return IsTransposed() ? Data()[j * NumCols() + i] : Data()[i * NumCols() + j];
             }
             else
             {
-                return IsTransposed()?Data()[j + i * NumRows()]:Data()[i + j * NumRows()];
+                return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
         }
     };
@@ -162,8 +155,8 @@ namespace bla
     template <typename T, ORDERING ORD>
     std::ostream &operator<<(std::ostream &ost, const Matrix<T, ORD> &m)
     {
-        size_t r = m.IsTransposed()?m.NumCols():m.NumRows();
-        size_t c = m.IsTransposed()?m.NumRows():m.NumCols();
+        size_t r = m.IsTransposed() ? m.NumCols() : m.NumRows();
+        size_t c = m.IsTransposed() ? m.NumRows() : m.NumCols();
         for (size_t i = 0; i < r; i++)
         {
             for (size_t j = 0; j < c; j++)
