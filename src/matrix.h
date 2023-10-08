@@ -94,6 +94,45 @@ namespace bla
                 return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
         }
+
+        operator Matrix<T, ColMajor>() const
+        {
+            if (ORD == ColMajor)
+            {
+                return *this;
+            }
+            else
+            {
+                Matrix<T, ColMajor> r(NumRows(), NumCols());
+                for (size_t i = 0; i < NumRows(); ++i)
+                {
+                    for (size_t j = 0; j < NumCols(); ++j)
+                    {
+                        r(i, j) = (*this)(i, j);
+                    }
+                }
+                return r;
+            }
+        }
+        operator Matrix<T, RowMajor>() const
+        {
+            if (ORD == RowMajor)
+            {
+                return *this;
+            }
+            else
+            {
+                Matrix<T, RowMajor> r(NumRows(), NumCols());
+                for (size_t i = 0; i < NumRows(); ++i)
+                {
+                    for (size_t j = 0; j < NumCols(); ++j)
+                    {
+                        r(i, j) = (*this)(i, j);
+                    }
+                }
+                return r;
+            }
+        }
     };
 
     template <typename T, ORDERING ORDA, ORDERING ORDB>
