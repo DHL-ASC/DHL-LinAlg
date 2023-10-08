@@ -1,6 +1,8 @@
 # Basic Linear Algebra library
 A simple linear algebra implementation using modern C++.
 
+[![Build Status](https://github.com/shirnschall/dhl-linalg/actions/workflows/cmake-single-platform.yml/badge.svg)]([https://dhl-linalg.readthedocs.io/en/latest/?badge=latest](https://github.com/shirnschall/dhl-linalg/actions/workflows/cmake-single-platform.yml/badge.svg))
+
 ### Documentation
 [![Documentation Status](https://readthedocs.org/projects/dhl-linalg/badge/?version=latest)](https://dhl-linalg.readthedocs.io/en/latest/?badge=latest)
 
