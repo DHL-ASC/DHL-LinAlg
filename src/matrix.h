@@ -100,35 +100,44 @@ namespace bla
             }
         }
 
-        operator Matrix<T,bla::ColMajor>() const{
-            if(ORD == bla::ColMajor){
+        operator Matrix<T, ColMajor>() const
+        {
+            if (ORD == ColMajor)
+            {
                 return *this;
             }
-            else{
-                Matrix<T,bla::ColMajor> r(NumRows(),NumCols());
-                for(size_t i = 0; i<NumRows(); ++i){
-                    for(size_t j = 0; i<NumCols(); ++i){
-                        r(i,j) = (*this)(i,j);
+            else
+            {
+                Matrix<T, ColMajor> r(NumRows(), NumCols());
+                for (size_t i = 0; i < NumRows(); ++i)
+                {
+                    for (size_t j = 0; j < NumCols(); ++j)
+                    {
+                        r(i, j) = (*this)(i, j);
                     }
                 }
                 return r;
             }
         }
-        operator Matrix<T,bla::RowMajor>() const{
-            if(ORD == bla::RowMajor){
+        operator Matrix<T, RowMajor>() const
+        {
+            if (ORD == RowMajor)
+            {
                 return *this;
             }
-            else{
-                Matrix<T,bla::RowMajor> r(NumRows(),NumCols());
-                for(size_t i = 0; i<NumRows(); ++i){
-                    for(size_t j = 0; i<NumCols(); ++i){
-                        r(i,j) = (*this)(i,j);
+            else
+            {
+                Matrix<T, RowMajor> r(NumRows(), NumCols());
+                for (size_t i = 0; i < NumRows(); ++i)
+                {
+                    for (size_t j = 0; j < NumCols(); ++j)
+                    {
+                        r(i, j) = (*this)(i, j);
                     }
                 }
                 return r;
             }
         }
-
     };
 
     template <typename T, ORDERING ORDA, ORDERING ORDB>
