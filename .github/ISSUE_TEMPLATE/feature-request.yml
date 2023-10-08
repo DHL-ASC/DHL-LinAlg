@@ -1,0 +1,24 @@
+name: Feature request
+description: Feature or change request
+title: "ENH: <Please write a comprehensive title after the 'ENH: ' prefix>"
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thank you for creating a new feature or improvement change.
+        
+  - type: checkboxes
+    id: duplication
+    attributes:
+      label: Duplication check
+      options:
+        - label: I checked the existing feature requests.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: "Proposed new feature or change:"
+    validations:
+      required: true
