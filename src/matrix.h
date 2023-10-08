@@ -2,6 +2,7 @@
 #define FILE_Matrix_H
 
 #include <iostream>
+#include <memory> //for shared_ptr
 
 #include "shape.h"
 #include "vector.h"
@@ -18,9 +19,8 @@ namespace bla
     class Matrix
     {
         size_t rows_, cols_;
-        T *data_;
+        std::shared_ptr<T[]> data_;
         bool isTransposed_ = false;
-        bool delData_ = true;    //TODO: use shared pointer for data to avoid transposed matrix freeing data vector without "del" variable.
 
     public:
         Matrix(size_t rows, size_t cols)
@@ -28,8 +28,8 @@ namespace bla
         {
         }
 
-        Matrix(size_t rows, size_t cols, T* data, bool isTransposed)
-            : rows_(rows), cols_(cols), data_(data),delData_(false)
+        Matrix(size_t rows, size_t cols, std::shared_ptr<T[]> data, bool isTransposed)
+            : rows_(rows), cols_(cols), data_(data)
         {
             isTransposed_ = isTransposed?false:true;
         }
@@ -45,13 +45,7 @@ namespace bla
             std::swap(data_, m.data_);
         }
 
-        ~Matrix() 
-        { 
-            if(DelData())
-            {
-                delete[] data_;
-            } 
-        }
+        ~Matrix() { ; }
 
         Matrix &operator=(const Matrix &v2)
         {
@@ -74,9 +68,8 @@ namespace bla
             return trans;
         }
 
-        bool DelData() const{return delData_;}
-        T* Data() { return data_; }
-        const T* Data() const { return data_; }
+        std::shared_ptr<T[]> Data() { return data_; }
+        std::shared_ptr<const T[]> Data() const { return data_; }
         bool IsTransposed() const { return isTransposed_; }
         size_t NumRows() const { return rows_; }
         size_t NumCols() const { return cols_; }
