@@ -31,7 +31,7 @@ namespace bla
         Matrix(size_t rows, size_t cols, std::shared_ptr<T[]> data, bool isTransposed)
             : rows_(rows), cols_(cols), data_(data)
         {
-            isTransposed_ = isTransposed?false:true;
+            isTransposed_ = isTransposed ? false : true;
         }
 
         Matrix(Shape shape) : Matrix(shape.NumRows(), shape.NumCols()) { ; }
@@ -45,7 +45,7 @@ namespace bla
             std::swap(data_, m.data_);
         }
 
-        ~Matrix() { ; }
+        ~Matrix() {}
 
         Matrix &operator=(const Matrix &v2)
         {
@@ -81,22 +81,22 @@ namespace bla
         {
             if (ORD == RowMajor)
             {
-                return IsTransposed()?Data()[j * NumCols() + i]:Data()[i * NumCols() + j];
+                return IsTransposed() ? Data()[j * NumCols() + i] : Data()[i * NumCols() + j];
             }
             else
             {
-                return IsTransposed()?Data()[j + i * NumRows()]:Data()[i + j * NumRows()];
+                return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
         }
         const T &operator()(size_t i, size_t j) const
         {
             if (ORD == RowMajor)
             {
-                return IsTransposed()?Data()[j * NumCols() + i]:Data()[i * NumCols() + j];
+                return IsTransposed() ? Data()[j * NumCols() + i] : Data()[i * NumCols() + j];
             }
             else
             {
-                return IsTransposed()?Data()[j + i * NumRows()]:Data()[i + j * NumRows()];
+                return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
         }
     };
@@ -155,8 +155,8 @@ namespace bla
     template <typename T, ORDERING ORD>
     std::ostream &operator<<(std::ostream &ost, const Matrix<T, ORD> &m)
     {
-        size_t r = m.IsTransposed()?m.NumCols():m.NumRows();
-        size_t c = m.IsTransposed()?m.NumRows():m.NumCols();
+        size_t r = m.IsTransposed() ? m.NumCols() : m.NumRows();
+        size_t c = m.IsTransposed() ? m.NumRows() : m.NumCols();
         for (size_t i = 0; i < r; i++)
         {
             for (size_t j = 0; j < c; j++)
