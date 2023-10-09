@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory> //for shared_ptr
+#include <exception>
 
 #include "vector.h"
 
@@ -93,6 +94,84 @@ namespace bla
             {
                 return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
+        }
+
+        void RowMultiplyByScalar(size_t row, T s)
+        {
+            for (size_t i = 0; i < NumCols(); i++)
+                (*this)(row, i) *= s;
+        }
+
+        void RowAddRow(size_t row, T to)
+        {
+            for (size_t i = 0; i < NumCols(); i++)
+                (*this)(to, i) += (*this)(row, i);
+        }
+
+        void RowMultiplySubtract(size_t sub, size_t row, T s)
+        {
+            RowMultiplyByScalar(row, -s);
+            RowAddRow(row, sub);
+            RowMultiplyByScalar(row, -1 / s);
+        }
+
+        void Pivot(size_t row)
+        {
+            size_t i = row;
+            for (; i < NumRows(); i++)
+            {
+                if ((*this)(i, row) != 0)
+                    break;
+            }
+            if (i == NumRows())
+                throw std::invalid_argument("Matrix is singular");
+            if (i != row)
+                SwapRows(i, row);
+        }
+
+        void SwapRows(size_t a, size_t b)
+        {
+            for (size_t i = 0; i < NumCols(); i++)
+                std::swap((*this)(a, i), (*this)(b, i));
+        }
+
+        Matrix<T, ORD> I()
+        {
+            // Determine the inverse of a matrix, should probaly be reviewed when we implement slicing
+            // (M, I) -> (I, M^{-1})
+            if (NumRows() != NumCols())
+            {
+                std::string message = "Matrix must be square. Given:(" + std::to_string(NumRows()) + ", " + std::to_string(NumRows()) + ").";
+                throw std::invalid_argument(message);
+            }
+            size_t dim = NumRows();
+            Matrix<T, ORD> inv(dim, 2 * dim);
+            for (size_t i = 0; i < dim; i++)
+            {
+                for (size_t j = 0; j < dim; j++)
+                {
+                    inv(i, j) = (*this)(i, j);
+                    inv(i, j + dim) = 1 ? (i == j) : 0;
+                }
+            }
+
+            for (size_t j = 0; j < dim; j++)
+            {
+                inv.Pivot(j);
+                inv.RowMultiplyByScalar(j, 1 / inv(j, j));
+                for (size_t i = 0; i < NumRows(); i++)
+                {
+                    if (i == j)
+                        continue;
+                    inv.RowMultiplySubtract(i, j, inv(i, j));
+                }
+            }
+
+            Matrix<T, ORD> inverse(dim, dim);
+            for (size_t i = 0; i < dim; i++)
+                for (size_t j = 0; j < dim; j++)
+                    inverse(i, j) = inv(i, j + dim);
+            return inverse;
         }
 
         operator Matrix<T, ColMajor>() const
