@@ -102,7 +102,7 @@ namespace bla
                 (*this)(row, i) *= s;
         }
 
-        void RowAddRow(size_t row, T to)
+        void RowAddRow(size_t row, size_t to)
         {
             for (size_t i = 0; i < NumCols(); i++)
                 (*this)(to, i) += (*this)(row, i);
@@ -144,7 +144,7 @@ namespace bla
                 for (size_t j = 0; j < dim; j++)
                 {
                     inv(i, j) = (*this)(i, j);
-                    inv(i, j + dim) = 1 ? (i == j) : 0;
+                    inv(i, j + dim) = (i == j) ? 1 : 0;
                 }
             }
 
