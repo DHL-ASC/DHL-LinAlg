@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory> //for shared_ptr
+#include <exception>
 
 #include "vector.h"
 
@@ -93,6 +94,82 @@ namespace bla
             {
                 return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
             }
+        }
+
+        void RowMultiplyByScalar(size_t row, T s)
+        {
+            for (size_t i = 0; i < NumCols(); i++)
+                (*this)(row, i) *= s;
+        }
+
+        void RowAddRow(size_t row, size_t to)
+        {
+            for (size_t i = 0; i < NumCols(); i++)
+                (*this)(to, i) += (*this)(row, i);
+        }
+
+        void Pivot(size_t row, std::shared_ptr<size_t[]> &d)
+        {
+            size_t i = row;
+            for (; i < NumRows(); i++)
+            {
+                if ((*this)(i, row) != 0)
+                    break;
+            }
+            if (i == NumRows())
+                throw std::invalid_argument("Matrix is singular");
+            if (i != row)
+            {
+                d[i] = row;
+                d[row] = i;
+            }
+        }
+
+        Matrix<T, ORD> I()
+        {
+            // Determine the inverse of a matrix, should probaly be reviewed when we implement slicing
+            // (M, I) -> (I, M^{-1})
+            if (NumRows() != NumCols())
+            {
+                std::string message = "Matrix must be square. Given:(" + std::to_string(NumRows()) + ", " + std::to_string(NumRows()) + ").";
+                throw std::invalid_argument(message);
+            }
+            size_t dim = NumRows();
+            Matrix<T, ORD> inv(dim, 2 * dim);
+            for (size_t i = 0; i < dim; i++)
+            {
+                for (size_t j = 0; j < dim; j++)
+                {
+                    inv(i, j) = (*this)(i, j);
+                    inv(i, j + dim) = (i == j) ? 1 : 0;
+                }
+            }
+            std::shared_ptr<size_t[]> d(new size_t[NumCols()]);
+            for (size_t i = 0; i < inv.NumCols(); i++)
+            {
+                d[i] = i;
+            }
+
+            for (size_t j = 0; j < dim; j++)
+            {
+                inv.Pivot(j, d);
+                inv.RowMultiplyByScalar(j, 1 / inv(d[j], j));
+                for (size_t i = 0; i < NumRows(); i++)
+                {
+                    if (i == j)
+                        continue;
+                    T s = inv(d[i], j);
+                    inv.RowMultiplyByScalar(d[j], -s);
+                    inv.RowAddRow(d[j], d[i]);
+                    inv.RowMultiplyByScalar(d[j], -1 / s);
+                }
+            }
+            // TODO: copying data is unneccessary, see github review https://github.com/shirnschall/DHL-LinAlg/pull/6#discussion_r1350429642
+            Matrix<T, ORD> inverse(dim, dim);
+            for (size_t i = 0; i < dim; i++)
+                for (size_t j = 0; j < dim; j++)
+                    inverse(i, j) = inv(i, j + dim);
+            return inverse;
         }
 
         operator Matrix<T, ColMajor>() const
