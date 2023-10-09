@@ -108,7 +108,7 @@ namespace bla
                 (*this)(to, i) += (*this)(row, i);
         }
 
-        void Pivot(size_t row)
+        void Pivot(size_t row, std::shared_ptr<size_t[]> &d)
         {
             size_t i = row;
             for (; i < NumRows(); i++)
@@ -119,13 +119,10 @@ namespace bla
             if (i == NumRows())
                 throw std::invalid_argument("Matrix is singular");
             if (i != row)
-                SwapRows(i, row);
-        }
-
-        void SwapRows(size_t a, size_t b)
-        {
-            for (size_t i = 0; i < NumCols(); i++)
-                std::swap((*this)(a, i), (*this)(b, i));
+            {
+                d[i] = row;
+                d[row] = i;
+            }
         }
 
         Matrix<T, ORD> I()
@@ -147,22 +144,27 @@ namespace bla
                     inv(i, j + dim) = (i == j) ? 1 : 0;
                 }
             }
+            std::shared_ptr<size_t[]> d(new size_t[NumCols()]);
+            for (size_t i = 0; i < inv.NumCols(); i++)
+            {
+                d[i] = i;
+            }
 
             for (size_t j = 0; j < dim; j++)
             {
-                inv.Pivot(j);
-                inv.RowMultiplyByScalar(j, 1 / inv(j, j));
+                inv.Pivot(j, d);
+                inv.RowMultiplyByScalar(j, 1 / inv(d[j], j));
                 for (size_t i = 0; i < NumRows(); i++)
                 {
                     if (i == j)
                         continue;
-                    T s = inv(i, j);
-                    inv.RowMultiplyByScalar(j, -s);
-                    inv.RowAddRow(j, i);
-                    inv.RowMultiplyByScalar(j, -1 / s);
+                    T s = inv(d[i], j);
+                    inv.RowMultiplyByScalar(d[j], -s);
+                    inv.RowAddRow(d[j], d[i]);
+                    inv.RowMultiplyByScalar(d[j], -1 / s);
                 }
             }
-
+            // TODO: copying data is unneccessary, see github review https://github.com/shirnschall/DHL-LinAlg/pull/6#discussion_r1350429642
             Matrix<T, ORD> inverse(dim, dim);
             for (size_t i = 0; i < dim; i++)
                 for (size_t j = 0; j < dim; j++)
