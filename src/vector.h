@@ -2,6 +2,7 @@
 #define FILE_VECTOR_H
 
 #include <iostream>
+#include <utility>
 
 namespace bla
 {
@@ -50,10 +51,13 @@ namespace bla
 		const T &operator()(size_t i) const { return data_[i]; }
 	};
 
-	template <typename T>
-	Vector<T> operator+(const Vector<T> &a, const Vector<T> &b)
+
+
+	template <typename TA, typename TB>
+	auto operator+(const Vector<TA> &a, const Vector<TB> &b)
 	{
-		Vector<T> sum(a.Size());
+		typedef decltype(std::declval<TA>()+std::declval<TB>()) TADD;
+		Vector<TADD> sum(a.Size());
 		for (size_t i = 0; i < a.Size(); i++)
 			sum(i) = a(i) + b(i);
 		return sum;
