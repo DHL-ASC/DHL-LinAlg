@@ -61,7 +61,6 @@ namespace bla
         Matrix<T, ORD> Transpose()
         {
             Matrix<T, ORD> trans(NumRows(), NumCols(), Data(), IsTransposed());
-
             return trans;
         }
 
@@ -215,6 +214,10 @@ namespace bla
     template <typename T, ORDERING ORDA, ORDERING ORDB>
     Matrix<T, ORDA> operator+(const Matrix<T, ORDA> &a, const Matrix<T, ORDB> &b)
     {
+        if ((a.NumRows() != b.NumRows()) || (a.NumCols() != b.NumCols()))
+        {
+            throw std::invalid_argument("Dimensions don't match.");
+        }
         Matrix<T, ORDA> sum(a.NumRows(), a.NumCols());
         for (size_t i = 0; i < a.NumRows(); i++)
             for (size_t j = 0; j < a.NumCols(); j++)
@@ -225,6 +228,10 @@ namespace bla
     template <typename T, ORDERING ORDA, ORDERING ORDB>
     Matrix<T, ORDA> operator*(const Matrix<T, ORDA> &a, const Matrix<T, ORDB> &b)
     {
+        if (a.NumCols() != b.NumRows())
+        {
+            throw std::invalid_argument("Dimensions don't match.");
+        }
         Matrix<T, ORDA> res(a.NumRows(), b.NumCols());
         for (size_t i = 0; i < res.NumRows(); i++)
         {
@@ -244,6 +251,10 @@ namespace bla
     template <typename T, ORDERING ORD>
     Vector<T> operator*(const Matrix<T, ORD> &a, const Vector<T> &b)
     {
+        if (a.NumCols() != b.Size())
+        {
+            throw std::invalid_argument("Dimensions don't match.");
+        }
         Vector<T> res(a.NumRows());
         for (size_t i = 0; i < a.NumRows(); i++)
         {

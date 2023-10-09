@@ -22,6 +22,7 @@ int main()
         {
             A(i, j) = i + j;
             B(i, j) = i * j;
+            C(j, i) = i * j;
         }
     }
 
@@ -36,14 +37,15 @@ int main()
     M(2, 2) = 1;
 
     bla::Matrix<double> D = A + B;
-    bla::Matrix<double> E = A * B;
-    bla::Matrix<double, bla::RowMajor> F = A * B;
+    bla::Matrix<double> E = A * C;
+    bla::Matrix<double, bla::RowMajor> F = A * C;
 
     std::cout << "A = " << A << std::endl;
     std::cout << "B = " << B << std::endl;
+    std::cout << "C = " << C << std::endl;
     std::cout << "A+B = " << D << std::endl;
-    std::cout << "A*B = " << E << std::endl;
-    std::cout << "(RowMajor) A*B = " << F << std::endl;
+    std::cout << "A*C = " << E << std::endl;
+    std::cout << "(RowMajor) A*C = " << F << std::endl;
     std::cout << "A*x = " << A * x << std::endl;
     std::cout << "A.T = " << A.Transpose() << std::endl;
     std::cout << "M = " << M << std::endl;
