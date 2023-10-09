@@ -108,13 +108,6 @@ namespace bla
                 (*this)(to, i) += (*this)(row, i);
         }
 
-        void RowMultiplySubtract(size_t sub, size_t row, T s)
-        {
-            RowMultiplyByScalar(row, -s);
-            RowAddRow(row, sub);
-            RowMultiplyByScalar(row, -1 / s);
-        }
-
         void Pivot(size_t row)
         {
             size_t i = row;
@@ -163,7 +156,10 @@ namespace bla
                 {
                     if (i == j)
                         continue;
-                    inv.RowMultiplySubtract(i, j, inv(i, j));
+                    T s = inv(i, j);
+                    inv.RowMultiplyByScalar(j, -s);
+                    inv.RowAddRow(j, i);
+                    inv.RowMultiplyByScalar(j, -1 / s);
                 }
             }
 
