@@ -2,8 +2,8 @@
 #define FILE_MATIRX_H
 
 #include <iostream>
-// #include <memory> //for shared_ptr
-// #include <exception>
+#include <memory> //for shared_ptr
+#include <exception>
 #include "expression.h"
 #include "vector.h"
 
