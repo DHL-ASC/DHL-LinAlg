@@ -54,28 +54,6 @@ namespace bla
 		}
 	};
 
-	// template <typename T>
-	// auto operator*(const T scal, const VectorView<T> &v)
-	// {
-	// 	VectorView<T> res(v) for (i = o; i < res.Size(), i++)
-	// 		res(i) *= res(i) * 2;
-	// 	return res;
-	// }
-
-	// template <typename T>
-	// auto operator*(const VectorView<T> &v, const T scal)
-	// {
-	// 	return scal * v;
-	// }
-
-	// template <typename T>
-	// auto operator*(const T scal, const VectorView<T> &v)
-	// {
-	// 	VectorView<T> res(v) for (i = o; i < res.Size(), i++)
-	// 		res(i) *= res(i) * 2;
-	// 	return res;
-	// }
-
 	template <typename T>
 	class Vector : public VectorView<T>
 	{
