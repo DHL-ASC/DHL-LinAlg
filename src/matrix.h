@@ -1,5 +1,5 @@
-#ifndef FILE_MATIRX_H
-#define FILE_MATIRX_H
+#ifndef FILE_MATRIX_H
+#define FILE_MATRIX_H
 
 #include <iostream>
 #include <memory> //for shared_ptr
@@ -42,7 +42,7 @@ namespace bla
                     (*this)(i, j) = scal;
             return *this;
         }
-        auto View() const { return MatrixView(rows_, cols_, dist_, data_); }
+        auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
         size_t nRows() const { return rows_; }
         size_t nCols() const { return cols_; }
         T *Data() { return data_; }
@@ -207,19 +207,19 @@ namespace bla
         }
     };
 
-    // template <typename... Args>
-    // std::ostream &operator<<(std::ostream &ost, const MatrixView<Args...> &m)
-    // {
-    //     for (size_t i = 0; i < m.nRows(); i++)
-    //     {
-    //         for (size_t j = 0; j < m.nCols(); j++)
-    //         {
-    //             ost << m(i, j) << ", ";
-    //         }
-    //         ost << "\n ";
-    //     }
-    //     return ost;
-    // }
+    template <typename... Args>
+    std::ostream &operator<<(std::ostream &ost, const MatrixView<Args...> &m)
+    {
+        for (size_t i = 0; i < m.nRows(); i++)
+        {
+            for (size_t j = 0; j < m.nCols(); j++)
+            {
+                ost << m(i, j) << ", ";
+            }
+            ost << "\n ";
+        }
+        return ost;
+    }
 
 } // namespace bla
 
