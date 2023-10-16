@@ -16,9 +16,9 @@ int main()
         x(i) = i;
     }
 
-    for (size_t i = 0; i < A.NumRows(); i++)
+    for (size_t i = 0; i < A.nRows(); i++)
     {
-        for (size_t j = 0; j < A.NumCols(); j++)
+        for (size_t j = 0; j < A.nCols(); j++)
         {
             A(i, j) = i + j;
             B(i, j) = i * j;
@@ -36,19 +36,30 @@ int main()
     M(1, 2) = 2;
     M(2, 2) = 1;
 
-    bla::Matrix<double> D = A + B;
-    bla::Matrix<double> E = A * C;
-    bla::Matrix<double, bla::RowMajor> F = A * C;
-
     std::cout << "A = " << A << std::endl;
-    std::cout << "B = " << B << std::endl;
-    std::cout << "C = " << C << std::endl;
-    std::cout << "A+B = " << D << std::endl;
-    std::cout << "A*C = " << E << std::endl;
-    std::cout << "(RowMajor) A*C = " << F << std::endl;
+    // Transpose
+    std::cout << "A.Transpose() = " << A.Transpose() << std::endl;
+    // Mat vec product
     std::cout << "A*x = " << A * x << std::endl;
-    std::cout << "A.T = " << A.Transpose() << std::endl;
+    // Rows and cols of matrix
+    std::cout << "A.Row(1) = " << A.Row(1) << std::endl;
+    std::cout << "2*A.Row(1) = " << 2 * A.Row(1) << std::endl;
+    std::cout << "A.Rows(1, 3) = " << A.Rows(1, 3) << std::endl;
+    std::cout << "A.Cols(1, 3) = " << A.Cols(1, 3) << std::endl;
+    std::cout << "A.Rows(1,3).Cols(1, 2) = " << A.Rows(1, 3).Cols(1, 2) << std::endl;
+    // Set row
+    A.Row(1) = 1 * A.Row(0);
+    std::cout << "A.Row(1) = " << A.Row(1) << std::endl;
+    // mat mat addition
+    std::cout << "B = " << B << std::endl;
+    std::cout << "A + B = " << A + B << std::endl;
+    // mat mat multiplication
+    std::cout << "C = " << C << std::endl;
+    std::cout << "A * C = " << A * C << std::endl;
+    // Inverse
     std::cout << "M = " << M << std::endl;
-    std::cout << "M.I = " << M.I() << std::endl;
-    std::cout << "M * M.I = " << M * M.I() << std::endl;
+    auto minv = M.Inverse();
+    std::cout << "M.Inverse() = " << minv << std::endl;
+    std::cout << "M = " << M << std::endl;
+    std::cout << "M * M.Inverse() = " << M * minv << std::endl;
 }

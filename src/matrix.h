@@ -1,121 +1,121 @@
-#ifndef FILE_Matrix_H
-#define FILE_Matrix_H
+#ifndef FILE_MATRIX_H
+#define FILE_MATRIX_H
 
 #include <iostream>
 #include <memory> //for shared_ptr
 #include <exception>
-
+#include "expression.h"
 #include "vector.h"
 
 namespace bla
 {
-
     enum ORDERING
     {
         ColMajor,
         RowMajor
     };
+
+    template <typename T, ORDERING ORD>
+    class MatrixView;
     template <typename T, ORDERING ORD = ORDERING::ColMajor>
-    class Matrix
+    class Matrix;
+    template <typename T, ORDERING ORD>
+    class MatrixView : public MatExpr<MatrixView<T, ORD>>
     {
-        size_t rows_, cols_;
-        std::shared_ptr<T[]> data_;
-        bool isTransposed_ = false;
+    protected:
+        size_t rows_, cols_, dist_;
+        T *data_;
 
     public:
-        Matrix(size_t rows, size_t cols)
-            : rows_(rows), cols_(cols), data_(new T[rows * cols])
-        {
-        }
+        MatrixView(size_t rows, size_t cols, size_t dist, T *data)
+            : rows_(rows), cols_(cols), dist_(dist), data_(data) {}
 
-        Matrix(size_t rows, size_t cols, std::shared_ptr<T[]> data, bool isTransposed)
-            : rows_(rows), cols_(cols), data_(data)
+        template <typename TB>
+        MatrixView &operator=(const MatExpr<TB> &m2)
         {
-            isTransposed_ = isTransposed ? false : true;
-        }
-        Matrix(const Matrix &m) : Matrix(m.NumRows(), m.NumCols()) { *this = m; }
-
-        Matrix(Matrix &&m) : rows_{0}, cols_{0}, data_(nullptr)
-        {
-            std::swap(rows_, m.rows_);
-            std::swap(cols_, m.cols_);
-            std::swap(data_, m.data_);
-        }
-
-        ~Matrix() {}
-
-        Matrix &operator=(const Matrix &v2)
-        {
-            for (size_t i = 0; i < DataSize(); i++)
-                data_[i] = v2(i);
+            for (size_t i = 0; i < rows_; i++)
+                for (size_t j = 0; j < cols_; j++)
+                    (*this)(i, j) = m2(i, j);
             return *this;
         }
 
-        Matrix &operator=(Matrix &&m2)
+        MatrixView &operator=(T scal)
         {
-            for (size_t i = 0; i < DataSize(); i++)
-                data_[i] = m2(i);
+            for (size_t i = 0; i < rows_; i++)
+                for (size_t j = 0; j < cols_; j++)
+                    (*this)(i, j) = scal;
             return *this;
         }
-
-        Matrix<T, ORD> Transpose()
-        {
-            Matrix<T, ORD> trans(NumRows(), NumCols(), Data(), IsTransposed());
-            return trans;
-        }
-
-        std::shared_ptr<T[]> Data() { return data_; }
-        std::shared_ptr<const T[]> Data() const { return data_; }
-        bool IsTransposed() const { return isTransposed_; }
-        size_t NumRows() const { return rows_; }
-        size_t NumCols() const { return cols_; }
-        size_t DataSize() const { return rows_ * cols_; }
+        auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
+        size_t nRows() const { return rows_; }
+        size_t nCols() const { return cols_; }
+        T *Data() { return data_; }
+        const T *Data() const { return data_; }
         T &operator()(size_t i) { return data_[i]; }
         const T &operator()(size_t i) const { return data_[i]; }
         T &operator()(size_t i, size_t j)
         {
             if (ORD == RowMajor)
-            {
-                return IsTransposed() ? Data()[j * NumCols() + i] : Data()[i * NumCols() + j];
-            }
+                return data_[i * dist_ + j];
             else
-            {
-                return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
-            }
+                return data_[i + j * dist_];
         }
         const T &operator()(size_t i, size_t j) const
         {
             if (ORD == RowMajor)
-            {
-                return IsTransposed() ? Data()[j * NumCols() + i] : Data()[i * NumCols() + j];
-            }
+                return data_[i * dist_ + j];
             else
-            {
-                return IsTransposed() ? Data()[j + i * NumRows()] : Data()[i + j * NumRows()];
-            }
+                return data_[i + j * dist_];
         }
 
-        void RowMultiplyByScalar(size_t row, T s)
+        auto Row(size_t i) const
         {
-            for (size_t i = 0; i < NumCols(); i++)
-                (*this)(row, i) *= s;
+            if constexpr (ORD == RowMajor)
+                return VectorView<T>(cols_, data_ + i * dist_);
+            else
+                return VectorView<T, size_t>(cols_, dist_, data_ + i);
+        }
+        auto Col(size_t i) const
+        {
+            if constexpr (ORD == ColMajor)
+                return VectorView<T>(rows_, data_ + i * dist_);
+            else
+                return VectorView<T, size_t>(rows_, dist_, data_ + i);
         }
 
-        void RowAddRow(size_t row, size_t to)
+        auto Rows(size_t first, size_t next) const
         {
-            for (size_t i = 0; i < NumCols(); i++)
-                (*this)(to, i) += (*this)(row, i);
+            if constexpr (ORD == ColMajor)
+                return MatrixView(next - first, cols_, dist_, data_ + first);
+            else
+                return MatrixView(next - first, cols_, dist_, data_ + first * dist_);
+        }
+
+        auto Cols(size_t first, size_t next) const
+        {
+            if constexpr (ORD == RowMajor)
+                return MatrixView(rows_, next - first, dist_, data_ + first);
+            else
+                return MatrixView(rows_, next - first, dist_, data_ + first * dist_);
+        }
+
+        auto Transpose()
+        {
+            if constexpr (ORD == RowMajor)
+                return MatrixView<T, ColMajor>(nCols(), nRows(), nCols(), Data());
+            else
+                return MatrixView<T, RowMajor>(nCols(), nRows(), nRows(), Data());
         }
 
         void Pivot(size_t row, std::shared_ptr<size_t[]> &d)
         {
             size_t i = row;
-            for (; i < NumRows(); i++)
+            for (; i < nRows(); i++)
             {
                 if ((*this)(i, row) != 0)
                     break;
             }
-            if (i == NumRows())
+            if (i == nRows())
                 throw std::invalid_argument("Matrix is singular");
             if (i != row)
             {
@@ -124,163 +124,99 @@ namespace bla
             }
         }
 
-        Matrix<T, ORD> I()
+
+        Matrix<T, ORD> Inverse()
         {
-            // Determine the inverse of a matrix, should probaly be reviewed when we implement slicing
-            // (M, I) -> (I, M^{-1})
-            if (NumRows() != NumCols())
-            {
-                std::string message = "Matrix must be square. Given:(" + std::to_string(NumRows()) + ", " + std::to_string(NumRows()) + ").";
-                throw std::invalid_argument(message);
-            }
-            size_t dim = NumRows();
-            Matrix<T, ORD> cpy((*this));
-            Matrix<T, ORD> res(dim, dim);
+            size_t dim = nRows();
+            Matrix<T, ORD> inv(dim, dim);
+            Matrix<T, ORD> cpy = (*this);
+            std::shared_ptr<size_t[]> d(new size_t[dim]);
+
             for (size_t i = 0; i < dim; i++)
             {
+                d[i] = i;
                 for (size_t j = 0; j < dim; j++)
                 {
-                    res(i, j) = (i == j) ? 1 : 0;
+                    inv(i, j) = (i == j) ? 1 : 0;
                 }
-            }
-            std::shared_ptr<size_t[]> d(new size_t[NumCols()]);
-            for (size_t i = 0; i < cpy.NumCols(); i++)
-            {
-                d[i] = i;
             }
 
             for (size_t j = 0; j < dim; j++)
             {
                 cpy.Pivot(j, d);
-                res.RowMultiplyByScalar(j, 1 / cpy(d[j], j));
-                cpy.RowMultiplyByScalar(j, 1 / cpy(d[j], j));
-                for (size_t i = 0; i < NumRows(); i++)
+                inv.Row(j) = 1 / cpy(d[j], j) * inv.Row(j);
+                cpy.Row(j) = 1 / cpy(d[j], j) * cpy.Row(j);
+                for (size_t i = 0; i < dim; i++)
                 {
                     if (i == j)
                         continue;
                     T s = cpy(d[i], j);
-                    cpy.RowMultiplyByScalar(d[j], -s);
-                    res.RowMultiplyByScalar(d[j], -s);
-                    cpy.RowAddRow(d[j], d[i]);
-                    res.RowAddRow(d[j], d[i]);
-                    cpy.RowMultiplyByScalar(d[j], -1 / s);
-                    res.RowMultiplyByScalar(d[j], -1 / s);
+                    cpy.Row(d[j]) = -s * cpy.Row(d[j]);
+                    inv.Row(d[j]) = -s * inv.Row(d[j]);
+                    cpy.Row(d[i]) = cpy.Row(d[j]) + cpy.Row(d[i]);
+                    inv.Row(d[i]) = inv.Row(d[j]) + inv.Row(d[i]);
+                    cpy.Row(d[j]) = -1 / s * cpy.Row(d[j]);
+                    inv.Row(d[j]) = -1 / s * inv.Row(d[j]);
                 }
             }
-            return res;
-        }
-
-        operator Matrix<T, ColMajor>() const
-        {
-            if (ORD == ColMajor)
-            {
-                return *this;
-            }
-            else
-            {
-                Matrix<T, ColMajor> r(NumRows(), NumCols());
-                for (size_t i = 0; i < NumRows(); ++i)
-                {
-                    for (size_t j = 0; j < NumCols(); ++j)
-                    {
-                        r(i, j) = (*this)(i, j);
-                    }
-                }
-                return r;
-            }
-        }
-        operator Matrix<T, RowMajor>() const
-        {
-            if (ORD == RowMajor)
-            {
-                return *this;
-            }
-            else
-            {
-                Matrix<T, RowMajor> r(NumRows(), NumCols());
-                for (size_t i = 0; i < NumRows(); ++i)
-                {
-                    for (size_t j = 0; j < NumCols(); ++j)
-                    {
-                        r(i, j) = (*this)(i, j);
-                    }
-                }
-                return r;
-            }
+            return inv;
         }
     };
 
-    template <typename T, ORDERING ORDA, ORDERING ORDB>
-    Matrix<T, ORDA> operator+(const Matrix<T, ORDA> &a, const Matrix<T, ORDB> &b)
-    {
-        if ((a.NumRows() != b.NumRows()) || (a.NumCols() != b.NumCols()))
-        {
-            throw std::invalid_argument("Dimensions don't match.");
-        }
-        Matrix<T, ORDA> sum(a.NumRows(), a.NumCols());
-        for (size_t i = 0; i < a.NumRows(); i++)
-            for (size_t j = 0; j < a.NumCols(); j++)
-                sum(i, j) = a(i, j) + b(i, j);
-        return sum; // sum is stored as ORDA
-    }
-
-    template <typename T, ORDERING ORDA, ORDERING ORDB>
-    Matrix<T, ORDA> operator*(const Matrix<T, ORDA> &a, const Matrix<T, ORDB> &b)
-    {
-        if (a.NumCols() != b.NumRows())
-        {
-            throw std::invalid_argument("Dimensions don't match.");
-        }
-        Matrix<T, ORDA> res(a.NumRows(), b.NumCols());
-        for (size_t i = 0; i < res.NumRows(); i++)
-        {
-            for (size_t j = 0; j < res.NumCols(); j++)
-            {
-                T sum = 0;
-                for (size_t k = 0l; k < res.NumCols(); k++)
-                {
-                    sum += a(i, k) * b(k, j);
-                }
-                res(i, j) = sum;
-            }
-        }
-        return res; // result is stored as ORDA
-    }
-
     template <typename T, ORDERING ORD>
-    Vector<T> operator*(const Matrix<T, ORD> &a, const Vector<T> &b)
+    class Matrix : public MatrixView<T, ORD>
     {
-        if (a.NumCols() != b.Size())
-        {
-            throw std::invalid_argument("Dimensions don't match.");
-        }
-        Vector<T> res(a.NumRows());
-        for (size_t i = 0; i < a.NumRows(); i++)
-        {
-            T sum = 0;
-            for (size_t j = 0; j < a.NumCols(); j++)
-            {
-                sum += a(i, j) * b(j);
-            }
-            res(i) = sum;
-        }
-        return res;
-    }
+        typedef MatrixView<T, ORD> BASE;
+        using BASE::cols_;
+        using BASE::data_;
+        using BASE::rows_;
 
-    template <typename T, ORDERING ORD>
-    Vector<T> operator*(const Vector<T> &b, const Matrix<T, ORD> &a)
-    {
-        return a * b;
-    }
-
-    template <typename T, ORDERING ORD>
-    std::ostream &operator<<(std::ostream &ost, const Matrix<T, ORD> &m)
-    {
-        size_t r = m.IsTransposed() ? m.NumCols() : m.NumRows();
-        size_t c = m.IsTransposed() ? m.NumRows() : m.NumCols();
-        for (size_t i = 0; i < r; i++)
+    public:
+        Matrix(size_t rows, size_t cols)
+            : MatrixView<T, ORD>(rows, cols, ORD == RowMajor ? cols : rows, new T[rows * cols])
         {
-            for (size_t j = 0; j < c; j++)
+        }
+
+        Matrix(const Matrix &m) : Matrix(m.nRows(), m.nCols()) { *this = m; }
+
+        Matrix(Matrix &&m) : MatrixView<T, ORD>(0, 0, 0, nullptr)
+        {
+            std::swap(rows_, m.rows_);
+            std::swap(cols_, m.cols_);
+            std::swap(data_, m.data_);
+        }
+
+        template <typename TB>
+        Matrix(const MatExpr<TB> &m)
+            : Matrix(m.nRows(), m.nCols())
+        {
+            *this = m;
+        }
+
+        ~Matrix() { delete[] data_; }
+
+        using BASE::operator=;
+        Matrix &operator=(const Matrix &m2)
+        {
+            for (size_t i = 0; i < m2.nRows() * m2.nCols(); i++)
+                data_[i] = m2(i);
+            return *this;
+        }
+
+        Matrix &operator=(Matrix &&m2)
+        {
+            for (size_t i = 0; i < m2.nRows() * m2.nCols(); i++)
+                data_[i] = m2(i);
+            return *this;
+        }
+    };
+
+    template <typename... Args>
+    std::ostream &operator<<(std::ostream &ost, const MatrixView<Args...> &m)
+    {
+        for (size_t i = 0; i < m.nRows(); i++)
+        {
+            for (size_t j = 0; j < m.nCols(); j++)
             {
                 ost << m(i, j) << ", ";
             }
