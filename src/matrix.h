@@ -9,12 +9,16 @@
 
 namespace bla
 {
-
     enum ORDERING
     {
         ColMajor,
         RowMajor
     };
+
+    template <typename T, ORDERING ORD>
+    class MatrixView;
+    template <typename T, ORDERING ORD = ORDERING::ColMajor>
+    class Matrix;
     template <typename T, ORDERING ORD>
     class MatrixView : public MatExpr<MatrixView<T, ORD>>
     {
@@ -120,12 +124,12 @@ namespace bla
             }
         }
 
-        auto Inverse()
+
+        Matrix<T, ORD> Inverse()
         {
-            // TODO:
             size_t dim = nRows();
-            auto inv = MatrixView<T, ORD>(dim, dim, dim, new T[dim * dim]);
-            auto cpy(*this);
+            Matrix<T, ORD> inv(dim, dim);
+            Matrix<T, ORD> cpy = (*this);
             std::shared_ptr<size_t[]> d(new size_t[dim]);
 
             for (size_t i = 0; i < dim; i++)
@@ -159,7 +163,7 @@ namespace bla
         }
     };
 
-    template <typename T, ORDERING ORD = ORDERING::ColMajor>
+    template <typename T, ORDERING ORD>
     class Matrix : public MatrixView<T, ORD>
     {
         typedef MatrixView<T, ORD> BASE;
