@@ -38,7 +38,7 @@ namespace bla
 			return *this;
 		}
 
-		auto View() const { return VectorView(size_, dist_, data_); }
+		auto Upcast() const { return VectorView(size_, dist_, data_); }
 		size_t Size() const { return size_; }
 		T &operator()(size_t i) { return data_[dist_ * i]; }
 		const T &operator()(size_t i) const { return data_[dist_ * i]; }

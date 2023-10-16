@@ -91,7 +91,6 @@ namespace bla
 
     public:
         SumMatExpr(TA a, TB b) : a_(a), b_(b) {}
-
         auto operator()(size_t i, size_t j) const { return a_(i, j) + b_(i, j); }
         size_t nRows() const { return a_.nRows(); }
         size_t nCols() const { return a_.nCols(); }
@@ -130,7 +129,6 @@ namespace bla
 
     public:
         MatVecExpr(TM m, TV v) : m_(m), v_(v) {}
-        auto Upcast() { return MatVecExpr(m_, v_); }
         auto operator()(size_t i) const
         {
             return m_.Row(i) * v_;
@@ -152,7 +150,6 @@ namespace bla
 
     public:
         MatMatExpr(TA m1, TB m2) : m1_(m1), m2_(m2) {}
-        auto Upcast() { return MatVecExpr(m1_, m2_); }
         auto operator()(size_t i, size_t j) const
         {
             return m1_.Row(i) * m2_.Col(j);
