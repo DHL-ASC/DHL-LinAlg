@@ -3,7 +3,7 @@ import sys
 
 _cmake_args = []
 
-if "win" in sys.platform:
+if "win32" in sys.platform:
     _cmake_args = ["-G","MinGW Makefiles"]
 
 
