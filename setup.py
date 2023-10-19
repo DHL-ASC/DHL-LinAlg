@@ -1,4 +1,11 @@
 from skbuild import setup
+import sys
+
+_cmake_args = []
+
+if "win" in sys.platform:
+    _cmake_args = ["-G","MinGW Makefiles"]
+
 
 setup(
     name="ASCsoft",
@@ -6,5 +13,5 @@ setup(
     author="J. Schoeberl",
     license="MIT",
     packages=["ASCsoft"],
-    cmake_args=[]
+    cmake_args = _cmake_args
 )
