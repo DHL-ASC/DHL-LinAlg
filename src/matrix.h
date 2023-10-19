@@ -124,7 +124,6 @@ namespace bla
             }
         }
 
-
         Matrix<T, ORD> Inverse()
         {
             size_t dim = nRows();
@@ -169,6 +168,7 @@ namespace bla
         typedef MatrixView<T, ORD> BASE;
         using BASE::cols_;
         using BASE::data_;
+        using BASE::dist_;
         using BASE::rows_;
 
     public:
@@ -184,6 +184,7 @@ namespace bla
             std::swap(rows_, m.rows_);
             std::swap(cols_, m.cols_);
             std::swap(data_, m.data_);
+            std::swap(dist_, m.dist_);
         }
 
         template <typename TB>
