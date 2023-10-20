@@ -62,4 +62,25 @@ int main()
     std::cout << "M.Inverse() = " << minv << std::endl;
     std::cout << "M = " << M << std::endl;
     std::cout << "M * M.Inverse() = " << M * minv << std::endl;
+
+
+
+
+    {
+        bla::Vector<double> x(3);
+        bla::Vector<double> res(3);
+        bla::Matrix<double> m(3,3);
+        for(size_t i=0; i< x.Size(); ++i)
+            x(i) = i;
+
+        for(size_t i=0; i< m.nRows(); ++i)
+            for(size_t j=0; j< m.nCols(); ++j)
+                m(i, j) = i + 2 * j;
+
+        res = m * x;
+
+        std::cout << "M*x = " << res << std::endl;
+    }
+
+
 }
