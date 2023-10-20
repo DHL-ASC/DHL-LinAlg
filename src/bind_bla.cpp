@@ -59,7 +59,7 @@ PYBIND11_MODULE(bla, m)
                 return v;
             }));
 
-    py::class_<Matrix<double, RowMajor>>(m, "Matrix")
+    py::class_<Matrix<double, RowMajor>>(m, "Matrix", py::buffer_protocol())
         .def(py::init<size_t, size_t>(),
              py::arg("rows"), py::arg("cols"), "Create a matrix of given size")
         .def("__getitem__",
@@ -123,7 +123,7 @@ PYBIND11_MODULE(bla, m)
         // .def(
         //     "T",
         //     [](const Matrix<double, RowMajor> &self)
-        //     { return Matrix<double, RowMajor>(self.Transpose()); },
+        //     { return self.Transpose(); },
         //     "Transpose of matrix")
         .def_property_readonly(
             "shape",
@@ -138,6 +138,15 @@ PYBIND11_MODULE(bla, m)
             "ncols", [](const Matrix<double, RowMajor> &self)
             { return self.nCols(); },
             "Get cols of matrix")
+        .def_buffer([](Matrix<double, RowMajor> &m) -> py::buffer_info
+                    { return py::buffer_info(
+                          m.Data(),                                /* Pointer to buffer */
+                          sizeof(double),                          /* Size of one scalar */
+                          py::format_descriptor<double>::format(), /* Python struct-style format descriptor */
+                          2,                                       /* Number of dimensions */
+                          {m.nRows(), m.nCols()},                  /* Buffer dimensions */
+                          {sizeof(double) * m.nCols(),             /* Strides (in bytes) for each index */
+                           sizeof(double)}); })
         .def(py::pickle(
             [](Matrix<double, RowMajor> &self)
             {
