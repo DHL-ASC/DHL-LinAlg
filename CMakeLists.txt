@@ -17,8 +17,10 @@ find_package(pybind11 CONFIG REQUIRED)
 
 
 add_executable (test_vector tests/test_vector.cc)
+add_executable (test_matrix tests/test_matrix.cc)
 
 pybind11_add_module(bla src/bind_bla.cpp)
 
 install (TARGETS bla DESTINATION ASCsoft)
 install (FILES src/vector.h DESTINATION ASCsoft/include)
+install (FILES src/matrix.h DESTINATION ASCsoft/include)
