@@ -139,12 +139,13 @@ PYBIND11_MODULE(bla, m)
             { return self.nCols(); },
             "Get cols of matrix")
         .def(py::pickle(
-            [](Matrix<double, RowMajor> &self) { // __getstate__
-                /* return a tuple that fully encodes the state of the object */
+            [](Matrix<double, RowMajor> &self)
+            {
                 return py::make_tuple(self.nRows(), self.nCols(),
                                       py::bytes((char *)(void *)&self(0), self.nRows() * self.nCols() * sizeof(double)));
             },
-            [](py::tuple t) { // __setstate__
+            [](py::tuple t)
+            {
                 if (t.size() != 3)
                     throw std::runtime_error("should be a 3-tuple!");
 
