@@ -120,11 +120,14 @@ PYBIND11_MODULE(bla, m)
                  str << self;
                  return str.str();
              })
-        // .def(
-        //     "T",
-        //     [](const Matrix<double, RowMajor> &self)
-        //     { return self.Transpose(); },
-        //     "Transpose of matrix")
+        .def(
+            "I", [](Matrix<double, RowMajor> &self)
+            { return self.Inverse(); },
+            "Inverse of matrix")
+        .def(
+            "T", [](Matrix<double, RowMajor> &self)
+            { return Matrix<double, RowMajor>(self.Transpose()); },
+            "Transpose of matrix")
         .def_property_readonly(
             "shape",
             [](const Matrix<double, RowMajor> &self)
