@@ -2,7 +2,7 @@ from skbuild import setup
 
 _cmake_args = []
 
-test_deps = ["pytest>=7.4.2", "numpy>=1.26.1"]
+test_deps = ["pytest", "numpy"]
 extras = {
     "test": test_deps,
 }
