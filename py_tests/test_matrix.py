@@ -10,9 +10,11 @@ def test_matrix_vector_multiplication():
 
     for i in range(len(x)):
         x[i] = i
-    for i, j in zip(range(3), range(3)):
-        m[i, j] = i + 2 * j
+    for i in range(len(x)):
+        for j in range(len(x)):
+            m[i, j] = i + 2 * j
     res = m * x
-    assert res[0] == pytest.approx(0, 1e-16)
-    assert res[1] == pytest.approx(3, 1e-16)
-    assert res[2] == pytest.approx(12, 1e-16)
+    
+    assert res[0] == pytest.approx(10, 1e-16)
+    assert res[1] == pytest.approx(13, 1e-16)
+    assert res[2] == pytest.approx(16, 1e-16)
