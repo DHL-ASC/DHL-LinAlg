@@ -68,7 +68,7 @@ PYBIND11_MODULE(bla, m)
     py::class_<Matrix<double, RowMajor>>(m, "Matrix", py::buffer_protocol())
         .def(py::init<size_t, size_t>(),
              py::arg("rows"), py::arg("cols"), "Create a matrix of given size")
-        // Single value
+        // getter
         .def("__getitem__",
              [](Matrix<double, RowMajor> self, std::tuple<int, int> ind)
              {
@@ -120,6 +120,7 @@ PYBIND11_MODULE(bla, m)
                  InitSlice(col_slice, self.nRows(), col_start, col_stop, col_step, col_n);
                  return Matrix<double, RowMajor>(self.Rows(row_start, row_stop).Cols(col_start, col_stop));
              })
+        // setter
         .def("__setitem__",
              [](Matrix<double, RowMajor> &self, std::tuple<int, int> ind,
                 double val)
@@ -129,7 +130,43 @@ PYBIND11_MODULE(bla, m)
                  if (i < 0 || i >= self.nRows()) throw py::index_error("matrix row out of range");
                  if (j < 0 || j >= self.nCols()) throw py::index_error("matrix col out of range");
                 self(i, j) = val; })
-
+        // set value on row, slice over cols
+        .def("__setitem__",
+             [](Matrix<double, RowMajor> &self, std::tuple<int, py::slice> ind, double val)
+             {
+                 auto [row, slice] = ind;
+                 if (row < 0)
+                     row += self.nRows();
+                 if (row < 0 || row >= self.nRows())
+                     throw py::index_error("matrix row out of range");
+                 size_t start, stop, step, n;
+                 InitSlice(slice, self.nCols(), start, stop, step, n);
+                 self.Rows(row, row + 1).Cols(start, stop) = val;
+             })
+        // set value on col
+        .def("__setitem__",
+             [](Matrix<double, RowMajor> &self, std::tuple<py::slice, int> ind, double val)
+             {
+                 auto [slice, col] = ind;
+                 if (col < 0)
+                     col += self.nCols();
+                 if (col < 0 || col >= self.nCols())
+                     throw py::index_error("matrix col out of range");
+                 size_t start, stop, step, n;
+                 InitSlice(slice, self.nRows(), start, stop, step, n);
+                 self.Cols(col, col + 1).Rows(start, stop) = val;
+             })
+        // set value on rows and cols
+        .def("__setitem__",
+             [](Matrix<double, RowMajor> &self, std::tuple<py::slice, py::slice> ind, double val)
+             {
+                 auto [row_slice, col_slice] = ind;
+                 size_t row_start, row_stop, row_step, row_n;
+                 size_t col_start, col_stop, col_step, col_n;
+                 InitSlice(row_slice, self.nRows(), row_start, row_stop, row_step, row_n);
+                 InitSlice(col_slice, self.nRows(), col_start, col_stop, col_step, col_n);
+                 self.Rows(row_start, row_stop).Cols(col_start, col_stop) = val;
+             })
         .def("__add__",
              [](Matrix<double, RowMajor> &self, Matrix<double, RowMajor> &other)
              {

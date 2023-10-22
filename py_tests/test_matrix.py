@@ -40,12 +40,12 @@ def test_matrix_set_get(m3):
 
 def test_matrix_slicing(m3):
     y = m3[1, :-1]
+    col1 = m3[:, 1]
+    sub_matrix = m3[:-1, :-1]
+    assert len(col1) == 3
     assert isinstance(y, Vector)
     assert len(y) == 2
-    col1 = m3[:, 1]
-    assert len(col1) == 3
-    print(m3)
-    print(m3[:-1, :-1])
+    assert np.array_equal(sub_matrix, np.array([[0, 2], [1, 3]]))
 
 
 def test_matrix_buffer_and_transpose(m3):
