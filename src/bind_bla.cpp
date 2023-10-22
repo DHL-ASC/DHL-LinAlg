@@ -7,6 +7,13 @@
 using namespace bla;
 namespace py = pybind11;
 
+// from ngsolve
+void InitSlice(const py::slice &inds, size_t len, size_t &start, size_t &stop, size_t &step, size_t &n)
+{
+    if (!inds.compute(len, &start, &stop, &step, &n))
+        throw py::error_already_set();
+}
+
 PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
@@ -26,10 +33,9 @@ PYBIND11_MODULE(bla, m)
 
         .def("__setitem__", [](Vector<double> &self, py::slice inds, double val)
              {
-        size_t start, stop, step, n;
-        if (!inds.compute(self.Size(), &start, &stop, &step, &n))
-          throw py::error_already_set();
-        self.Range(start, stop).Slice(0,step) = val; })
+            size_t start, stop, step, n;
+            InitSlice(inds, self.Size(), start, stop, step, n);
+            self.Range(start, stop).Slice(0,step) = val; })
 
         .def("__add__", [](Vector<double> &self, Vector<double> &other)
              { return Vector<double>(self + other); })
@@ -39,9 +45,9 @@ PYBIND11_MODULE(bla, m)
 
         .def("__str__", [](const Vector<double> &self)
              {
-        std::stringstream str;
-        str << self;
-        return str.str(); })
+            std::stringstream str;
+            str << self;
+            return str.str(); })
 
         .def(py::pickle(
             [](Vector<double> &self) { // __getstate__
@@ -62,22 +68,74 @@ PYBIND11_MODULE(bla, m)
     py::class_<Matrix<double, RowMajor>>(m, "Matrix", py::buffer_protocol())
         .def(py::init<size_t, size_t>(),
              py::arg("rows"), py::arg("cols"), "Create a matrix of given size")
+        // Single value
         .def("__getitem__",
              [](Matrix<double, RowMajor> self, std::tuple<int, int> ind)
              {
-                 return self(std::get<0>(ind), std::get<1>(ind));
+                 auto [i, j] = ind;
+                 if (i < 0)
+                     i += self.nRows();
+                 if (j < 0)
+                     j += self.nCols();
+                 if (i < 0 || i >= self.nRows())
+                     throw py::index_error("matrix row out of range");
+                 if (j < 0 || j >= self.nCols())
+                     throw py::index_error("matrix col out of range");
+                 return self(i, j);
+             })
+        // get row, slice over cols
+        .def("__getitem__",
+             [](Matrix<double, RowMajor> self, std::tuple<int, py::slice> ind)
+             {
+                 auto [row, slice] = ind;
+                 if (row < 0)
+                     row += self.nRows();
+                 if (row < 0 || row >= self.nRows())
+                     throw py::index_error("matrix row out of range");
+                 size_t start, stop, step, n;
+                 InitSlice(slice, self.nCols(), start, stop, step, n);
+                 return Vector<double>(self.Row(row).Range(start, stop).Slice(0, step));
+             })
+        // get col, slice over rows
+        .def("__getitem__",
+             [](Matrix<double, RowMajor> self, std::tuple<py::slice, int> ind)
+             {
+                 auto [slice, col] = ind;
+                 if (col < 0)
+                     col += self.nCols();
+                 if (col < 0 || col >= self.nCols())
+                     throw py::index_error("matrix col out of range");
+                 size_t start, stop, step, n;
+                 InitSlice(slice, self.nRows(), start, stop, step, n);
+                 return Vector<double>(self.Col(col).Range(start, stop).Slice(0, step));
+             })
+        // slice over rows and cols
+        .def("__getitem__",
+             [](Matrix<double, RowMajor> self, std::tuple<py::slice, py::slice> ind)
+             {
+                 auto [row_slice, col_slice] = ind;
+                 size_t row_start, row_stop, row_step, row_n;
+                 size_t col_start, col_stop, col_step, col_n;
+                 InitSlice(row_slice, self.nRows(), row_start, row_stop, row_step, row_n);
+                 InitSlice(col_slice, self.nRows(), col_start, col_stop, col_step, col_n);
+                 return Matrix<double, RowMajor>(self.Rows(row_start, row_stop).Cols(col_start, col_stop));
              })
         .def("__setitem__",
-             [](Matrix<double, RowMajor> &self, std::tuple<int, int> i,
+             [](Matrix<double, RowMajor> &self, std::tuple<int, int> ind,
                 double val)
-             { self(std::get<0>(i), std::get<1>(i)) = val; })
+             { auto [i, j] = ind;
+                 if (i < 0) i += self.nRows();
+                 if (j < 0) j += self.nCols();
+                 if (i < 0 || i >= self.nRows()) throw py::index_error("matrix row out of range");
+                 if (j < 0 || j >= self.nCols()) throw py::index_error("matrix col out of range");
+                self(i, j) = val; })
 
         .def("__add__",
              [](Matrix<double, RowMajor> &self, Matrix<double, RowMajor> &other)
              {
                  return Matrix<double, RowMajor>(self + other);
              })
-        // matrix scale multiplication
+        // matrix scalar multiplication
         .def("__mul__",
              [](Matrix<double, RowMajor> &self, double scal)
              {
@@ -136,11 +194,11 @@ PYBIND11_MODULE(bla, m)
         .def_property_readonly(
             "nrows", [](const Matrix<double, RowMajor> &self)
             { return self.nRows(); },
-            "Get rows of matrix")
+            "Get number of rows of matrix")
         .def_property_readonly(
             "ncols", [](const Matrix<double, RowMajor> &self)
             { return self.nCols(); },
-            "Get cols of matrix")
+            "Get number of cols of matrix")
         .def_buffer([](Matrix<double, RowMajor> &m) -> py::buffer_info
                     { return py::buffer_info(
                           m.Data(),                                /* Pointer to buffer */
