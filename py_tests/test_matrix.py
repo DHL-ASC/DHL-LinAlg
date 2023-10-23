@@ -38,6 +38,23 @@ def test_matrix_set_get(m3):
     assert m3[2, 1] == 20
 
 
+def test_matrix_inverse():
+    m = Matrix(3, 3)
+    m[0, 0] = 0
+    m[1, 0] = 2
+    m[2, 0] = -1
+    m[0, 1] = 2
+    m[1, 1] = 1
+    m[2, 1] = 2
+    m[0, 2] = -1
+    m[1, 2] = 2
+    m[2, 2] = 1
+    minv = m.I()
+    assert np.allclose(np.asarray(minv), np.linalg.inv(m))
+    assert np.array_equal(np.asarray(m * minv), np.eye(3))
+    assert np.array_equal(np.asarray(minv * m), np.eye(3))
+
+
 def test_matrix_slicing(m3):
     y = m3[1, :-1]
     col1 = m3[:, 1]
