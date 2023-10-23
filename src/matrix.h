@@ -133,7 +133,7 @@ namespace bla
 
         Matrix<T, ORD> Inverse()
         {
-            size_t dim = nRows();
+            const size_t dim = nRows();
             Matrix<T, ORD> inv(dim, dim);
             Matrix<T, ORD> cpy = (*this);
             size_t d[dim];
