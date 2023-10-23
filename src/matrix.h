@@ -17,7 +17,7 @@ namespace bla
 
     template <typename T, ORDERING ORD>
     class MatrixView;
-    template <typename T, ORDERING ORD = ORDERING::ColMajor>
+    template <typename T, ORDERING ORD = ORDERING::RowMajor>
     class Matrix;
     template <typename T, ORDERING ORD>
     class MatrixView : public MatExpr<MatrixView<T, ORD>>
