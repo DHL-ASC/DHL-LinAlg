@@ -1,11 +1,5 @@
 /build/*
-build/*
 /_skbuild/*
-_skbuild/*
-/.pytest_cache/*
-.pytest_cache/*
-**/__pycache__/*
-*/__pycache__/*
 .DS_Store
 ._.DS_Store
 **/.DS_Store
@@ -68,6 +62,11 @@ build/**/*
 
 
 ## Python
+
+env/*
+venv/*
+.env/*
+.venv/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
