@@ -29,8 +29,10 @@ PYBIND11_MODULE(bla, m)
             if (i < 0 || i >= self.Size()) throw py::index_error("vector index out of range");
         self(i) = v; })
         .def("__getitem__", [](Vector<double> &self, int i)
-             { return self(i); })
-
+             { 
+            if (i < 0) i += self.Size();
+            if (i < 0 || i >= self.Size()) throw py::index_error("vector index out of range");
+            return self(i); })
         .def("__setitem__", [](Vector<double> &self, py::slice inds, double val)
              {
             size_t start, stop, step, n;
