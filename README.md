@@ -14,8 +14,8 @@ This library is part of a scientific programing course at TU Vienna. Here are no
 [![Documentation Status](https://readthedocs.org/projects/dhl-linalg/badge/?version=latest)](https://dhl-linalg.readthedocs.io/en/latest/?badge=latest)
 
 ## Installation
-#### Intallation via pip:      
-```pip install DHL-linalg```
+<!-- #### Intallation via pip:      
+```pip install DHL-linalg``` -->
 
 #### Building from sorce:
 ```git clone https://github.com/DHL-ASC/DHL-LinAlg.git```    
