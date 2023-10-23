@@ -107,20 +107,27 @@ namespace bla
                 return MatrixView<T, RowMajor>(nCols(), nRows(), nRows(), Data());
         }
 
-        void Pivot(size_t row, std::shared_ptr<size_t[]> &d)
+        void Pivot(size_t row, size_t d[], Matrix<T, ORD> *inv, Matrix<T, ORD> *cpy)
         {
             size_t i = row;
             for (; i < nRows(); i++)
             {
-                if ((*this)(i, row) != 0)
+                if ((*cpy)(i, row) != 0)
                     break;
             }
             if (i == nRows())
                 throw std::invalid_argument("Matrix is singular");
             if (i != row)
             {
-                d[i] = row;
-                d[row] = i;
+                // TODO: implement row swapping in an efficient way
+                // without moving data in memory
+                // d[i] = row;
+                // d[row] = i;
+                for (size_t j = 0; j < nCols(); j++)
+                {
+                    std::swap((*inv)(i, j), (*inv)(row, j));
+                    std::swap((*cpy)(i, j), (*cpy)(row, j));
+                }
             }
         }
 
@@ -129,33 +136,27 @@ namespace bla
             size_t dim = nRows();
             Matrix<T, ORD> inv(dim, dim);
             Matrix<T, ORD> cpy = (*this);
-            std::shared_ptr<size_t[]> d(new size_t[dim]);
+            size_t d[dim];
 
             for (size_t i = 0; i < dim; i++)
             {
                 d[i] = i;
                 for (size_t j = 0; j < dim; j++)
-                {
                     inv(i, j) = (i == j) ? 1 : 0;
-                }
             }
 
             for (size_t j = 0; j < dim; j++)
             {
-                cpy.Pivot(j, d);
-                inv.Row(j) = 1 / cpy(d[j], j) * inv.Row(j);
-                cpy.Row(j) = 1 / cpy(d[j], j) * cpy.Row(j);
+                cpy.Pivot(j, d, &inv, &cpy);
+                inv.Row(d[j]) = 1 / cpy(d[j], j) * inv.Row(d[j]);
+                cpy.Row(d[j]) = 1 / cpy(d[j], j) * cpy.Row(d[j]);
                 for (size_t i = 0; i < dim; i++)
                 {
-                    if (i == j)
+                    if (d[i] == d[j])
                         continue;
                     T s = cpy(d[i], j);
-                    cpy.Row(d[j]) = -s * cpy.Row(d[j]);
-                    inv.Row(d[j]) = -s * inv.Row(d[j]);
-                    cpy.Row(d[i]) = cpy.Row(d[j]) + cpy.Row(d[i]);
-                    inv.Row(d[i]) = inv.Row(d[j]) + inv.Row(d[i]);
-                    cpy.Row(d[j]) = -1 / s * cpy.Row(d[j]);
-                    inv.Row(d[j]) = -1 / s * inv.Row(d[j]);
+                    cpy.Row(d[i]) = -s * cpy.Row(d[j]) + cpy.Row(d[i]);
+                    inv.Row(d[i]) = -s * inv.Row(d[j]) + inv.Row(d[i]);
                 }
             }
             return inv;
