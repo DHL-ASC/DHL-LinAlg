@@ -18,8 +18,8 @@ This library is part of a scientific programing course at TU Vienna. Here are no
 ```pip install DHL-linalg```
 
 #### Building from sorce:
-```git clone https://github.com/DHL-ASC/DHL-LinAlg.git```
-```cd DHL-LinAlg```
+```git clone https://github.com/DHL-ASC/DHL-LinAlg.git```    
+```cd DHL-LinAlg```    
 ```pip install . -v```
 
 #### Requirements
