@@ -107,7 +107,7 @@ namespace bla
                 return MatrixView<T, RowMajor>(nCols(), nRows(), nRows(), Data());
         }
 
-        void Pivot(size_t row, size_t d[], Matrix<T, ORD> *inv, Matrix<T, ORD> *cpy)
+        void Pivot(size_t row, size_t *d, Matrix<T, ORD> *inv, Matrix<T, ORD> *cpy)
         {
             size_t i = row;
             for (; i < nRows(); i++)
@@ -133,10 +133,10 @@ namespace bla
 
         Matrix<T, ORD> Inverse()
         {
-            const size_t dim = nRows();
+            size_t dim = nRows();
             Matrix<T, ORD> inv(dim, dim);
             Matrix<T, ORD> cpy = (*this);
-            size_t d[dim];
+            size_t *d = new size_t[dim];
 
             for (size_t i = 0; i < dim; i++)
             {
@@ -159,6 +159,7 @@ namespace bla
                     inv.Row(d[i]) = -s * inv.Row(d[j]) + inv.Row(d[i]);
                 }
             }
+            delete[] d;
             return inv;
         }
     };
