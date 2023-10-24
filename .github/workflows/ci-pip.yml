@@ -2,9 +2,9 @@ name: "Pip"
 
 on:
   push:
-    branches: [ "main", "py-bindings" ]
+    branches: [ "main", "hpc" ]
   pull_request:
-    branches: [ "main", "py-bindings" ]
+    branches: [ "main", "hpc" ]
 
 jobs:
   build:
