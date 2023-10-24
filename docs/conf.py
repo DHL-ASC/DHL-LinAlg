@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'ASC-bla'
-copyright = '2023, J. Schoeberl'
-author = 'J. Schoeberl'
+project = 'DHL-LinAlg'
+copyright = '2023, DHL'
+author = 'DHL'
 
 
 # -- General configuration ---------------------------------------------------
