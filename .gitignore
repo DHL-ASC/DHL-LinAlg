@@ -78,3 +78,5 @@ __pycache__/
 *.egg
 .ipynb_checkpoints
 
+# Sphinx documentation
+docs/_build/
