@@ -4,7 +4,7 @@ project(ASC_bla)
 set (CMAKE_CXX_STANDARD 17)
 
 
-include_directories(src)
+include_directories(src external_dependencies/HPC/src external_dependencies/HPC/concurrentqueue)
 
 
 find_package(Python 3.8 COMPONENTS Interpreter Development REQUIRED)
