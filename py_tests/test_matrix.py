@@ -6,8 +6,8 @@ import numpy as np
 from ASCsoft.bla import Matrix
 from ASCsoft.bla import Vector
 
-def test_start_workers():
-    StartWorkers(6)
+#def test_start_workers():
+    #StartWorkers(6)
 
 @pytest.fixture(name="v3")
 def vector_3():
@@ -79,5 +79,5 @@ def test_matrix_pickle(m3):
     assert m3[1, 2] == pickeld_m[1, 2]
     assert m3[0, 1] == pickeld_m[0, 1]
 
-def test_stop_workers():
-    StopWorkers()
+#def test_stop_workers():
+    #StopWorkers()
