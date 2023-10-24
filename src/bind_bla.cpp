@@ -3,6 +3,7 @@
 
 #include "vector.h"
 #include "matrix.h"
+#include "taskmanager.h"
 
 using namespace bla;
 namespace py = pybind11;
@@ -17,6 +18,9 @@ void InitSlice(const py::slice &inds, size_t len, size_t &start, size_t &stop, s
 PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
+
+    m.def("StartWorker", &ASC_HPC::StartWorkers);
+    m.def("StopWorker", &ASC_HPC::StopWorkers);
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),
