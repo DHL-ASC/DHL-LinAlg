@@ -17,7 +17,7 @@ find_package(pybind11 CONFIG REQUIRED)
 
 
 add_executable (test_vector tests/test_vector.cc)
-add_executable (test_matrix tests/test_matrix.cc)
+add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc)
 
 pybind11_add_module(bla src/bind_bla.cpp)
 
