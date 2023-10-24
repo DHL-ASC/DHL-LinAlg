@@ -19,8 +19,8 @@ PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
 
-    m.def("StartWorker", &ASC_HPC::StartWorkers);
-    m.def("StopWorker", &ASC_HPC::StopWorkers);
+    m.def("StartWorkers", &ASC_HPC::StartWorkers);
+    m.def("StopWorkers", &ASC_HPC::StopWorkers);
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),

@@ -26,6 +26,6 @@ pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanag
 install (TARGETS bla DESTINATION ASCsoft)
 install (FILES src/vector.h DESTINATION ASCsoft/include)
 install (FILES src/matrix.h DESTINATION ASCsoft/include)
-# install (FILES external_dependencies/HPC/src/taskmanager.h DESTINATION ASCsoft/include)
-# install (FILES external_dependencies/HPC/src/timer.h DESTINATION ASCsoft/include)
+install (FILES external_dependencies/HPC/src/taskmanager.h DESTINATION ASCsoft/include)
+install (FILES external_dependencies/HPC/src/timer.h DESTINATION ASCsoft/include)
 # install (FILES external_dependencies/HPC/concurrentqueue/concurrentqueue.h DESTINATION ASCsoft/include)
