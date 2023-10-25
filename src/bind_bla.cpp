@@ -22,6 +22,13 @@ PYBIND11_MODULE(bla, m)
     m.def("StartWorkers", &ASC_HPC::StartWorkers);
     m.def("StopWorkers", &ASC_HPC::StopWorkers);
 
+    py::class_<TaskManager>(m, "TaskManager")
+        .def(py::init<>())
+        .def(py::init<size_t>(), "pajetrace"_a, "Run paje-tracer, specify buffersize in bytes")
+        .def("__enter__", &TaskManager::Enter)
+        .def("__exit__", &TaskManager::Exit)
+        .def("__timing__", &TaskManager::Timing);
+
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),
              py::arg("size"), "create vector of given size")
