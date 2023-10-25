@@ -15,19 +15,28 @@ void InitSlice(const py::slice &inds, size_t len, size_t &start, size_t &stop, s
         throw py::error_already_set();
 }
 
+class ParallelComputing{
+        ASC_HPC::TaskManager t = ASC_HPC::TaskManager();
+    public:
+        ParallelComputing(){}
+        void Enter(){
+            t.StartWorkers();
+        }
+        void Exit(py::object exc_type, py::object exc_value, py::object traceback){
+            t.StopWorkers();
+        }
+};
+
 PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
 
-    m.def("StartWorkers", &ASC_HPC::StartWorkers);
-    m.def("StopWorkers", &ASC_HPC::StopWorkers);
-
-    py::class_<TaskManager>(m, "TaskManager")
+    py::class_<ParallelComputing>(m, "ParallelComputing")
         .def(py::init<>())
-        .def(py::init<size_t>(), "pajetrace"_a, "Run paje-tracer, specify buffersize in bytes")
-        .def("__enter__", &TaskManager::Enter)
-        .def("__exit__", &TaskManager::Exit)
-        .def("__timing__", &TaskManager::Timing);
+        .def("__enter__", &ParallelComputing::Enter)
+        .def("__exit__", &ParallelComputing::Exit);
+        //.def("__timing__", &ASC_HPC::TaskManager::Timing);
+        //.def(py::init<size_t>(), "pajetrace"_a, "Run paje-tracer, specify buffersize in bytes")
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),

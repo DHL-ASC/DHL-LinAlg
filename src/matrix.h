@@ -35,7 +35,7 @@ namespace bla
         template <typename TB>
         MatrixView &operator=(const MatExpr<TB> &m2)
         {
-            ASC_HPC::RunParallel(6, [this, &m2] (int id, int numThreads)
+            ASC_HPC::TaskManager::RunParallel([this, &m2] (int id, int numThreads)
             {
                 for (size_t i = id; i < this->rows_; i+=numThreads)
                     for (size_t j = 0; j < this->cols_; j++)

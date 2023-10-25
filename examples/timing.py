@@ -1,11 +1,10 @@
 import time
 from ASCsoft.bla import Matrix
 from ASCsoft.bla import Vector
-from ASCsoft.bla import StartWorkers
-from ASCsoft.bla import StopWorkers
+from ASCsoft.bla import ParallelComputing
 
-s = 2000
-numThreads = 8
+s = 100
+numThreads = 7
 print(f"initializing {s}x{s} matrices...\n")
 m = Matrix(s, s)
 n = Matrix(s, s)
@@ -23,10 +22,9 @@ print(end - start)
 print("\ndone.\n")
 
 print(f"Measuring with {numThreads} thread\n")
-StartWorkers(numThreads)
-start = time.time()
-d = m*n
-end = time.time()
-StopWorkers()
+with ParallelComputing():
+    start = time.time()
+    d = m*n
+    end = time.time()
 print(end - start)
 print("\ndone.\n")
