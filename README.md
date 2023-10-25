@@ -19,7 +19,7 @@ This library is part of a scientific programing course at TU Vienna. Here are no
 
 #### Building from sorce:
 ```bash
-git clone https://github.com/DHL-ASC/DHL-LinAlg.git 
+git clone --recurse-submodules https://github.com/DHL-ASC/DHL-LinAlg.git 
 cd DHL-LinAlg  
 pip install .
 ```
