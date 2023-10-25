@@ -7,6 +7,8 @@
 #include "expression.h"
 #include "vector.h"
 
+#include <taskmanager.h>
+
 namespace bla
 {
     enum ORDERING
@@ -33,9 +35,12 @@ namespace bla
         template <typename TB>
         MatrixView &operator=(const MatExpr<TB> &m2)
         {
-            for (size_t i = 0; i < rows_; i++)
-                for (size_t j = 0; j < cols_; j++)
-                    (*this)(i, j) = m2(i, j);
+            ASC_HPC::TaskManager::RunParallel([this, &m2] (int id, int numThreads)
+            {
+                for (size_t i = id; i < this->rows_; i+=numThreads)
+                    for (size_t j = 0; j < this->cols_; j++)
+                        (*this)(i, j) = m2(i, j);
+            });
             return *this;
         }
 

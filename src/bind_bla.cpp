@@ -3,6 +3,7 @@
 
 #include "vector.h"
 #include "matrix.h"
+#include "taskmanager.h"
 
 using namespace bla;
 namespace py = pybind11;
@@ -14,9 +15,40 @@ void InitSlice(const py::slice &inds, size_t len, size_t &start, size_t &stop, s
         throw py::error_already_set();
 }
 
+namespace bla
+{
+    class ParallelComputing
+    {
+        ASC_HPC::TaskManager t;
+
+    public:
+        ParallelComputing() : t() {}
+        void Enter()
+        {
+            t.StartWorkers();
+        }
+        void Exit(py::object exc_type, py::object exc_value, py::object traceback)
+        {
+            t.StopWorkers();
+        }
+        static int getNumThreads()
+        {
+            return ASC_HPC::TaskManager::getNumThreads();
+        }
+    };
+}
+
 PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
+    m.def("NumThreads", &ParallelComputing::getNumThreads);
+
+    py::class_<ParallelComputing>(m, "ParallelComputing")
+        .def(py::init<>())
+        .def("__enter__", &ParallelComputing::Enter)
+        .def("__exit__", &ParallelComputing::Exit);
+    //.def("__timing__", &ASC_HPC::TaskManager::Timing);
+    //.def(py::init<size_t>(), "pajetrace"_a, "Run paje-tracer, specify buffersize in bytes")
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),
@@ -25,19 +57,23 @@ PYBIND11_MODULE(bla, m)
 
         .def("__setitem__", [](Vector<double> &self, int i, double v)
              {
-            if (i < 0) i += self.Size();
-            if (i < 0 || i >= self.Size()) throw py::index_error("vector index out of range");
+        if (i < 0)
+            i += self.Size();
+        if (i < 0 || i >= self.Size())
+            throw py::index_error("vector index out of range");
         self(i) = v; })
         .def("__getitem__", [](Vector<double> &self, int i)
-             { 
-            if (i < 0) i += self.Size();
-            if (i < 0 || i >= self.Size()) throw py::index_error("vector index out of range");
-            return self(i); })
+             {
+        if (i < 0)
+            i += self.Size();
+        if (i < 0 || i >= self.Size())
+            throw py::index_error("vector index out of range");
+        return self(i); })
         .def("__setitem__", [](Vector<double> &self, py::slice inds, double val)
              {
-            size_t start, stop, step, n;
-            InitSlice(inds, self.Size(), start, stop, step, n);
-            self.Range(start, stop).Slice(0,step) = val; })
+        size_t start, stop, step, n;
+        InitSlice(inds, self.Size(), start, stop, step, n);
+        self.Range(start, stop).Slice(0, step) = val; })
 
         .def("__add__", [](Vector<double> &self, Vector<double> &other)
              { return Vector<double>(self + other); })
@@ -47,9 +83,9 @@ PYBIND11_MODULE(bla, m)
 
         .def("__str__", [](const Vector<double> &self)
              {
-            std::stringstream str;
-            str << self;
-            return str.str(); })
+        std::stringstream str;
+        str << self;
+        return str.str(); })
 
         .def(py::pickle(
             [](Vector<double> &self) { // __getstate__
@@ -126,12 +162,17 @@ PYBIND11_MODULE(bla, m)
         .def("__setitem__",
              [](Matrix<double, RowMajor> &self, std::tuple<int, int> ind,
                 double val)
-             { auto [i, j] = ind;
-                 if (i < 0) i += self.nRows();
-                 if (j < 0) j += self.nCols();
-                 if (i < 0 || i >= self.nRows()) throw py::index_error("matrix row out of range");
-                 if (j < 0 || j >= self.nCols()) throw py::index_error("matrix col out of range");
-                self(i, j) = val; })
+             {
+        auto [i, j] = ind;
+        if (i < 0)
+            i += self.nRows();
+        if (j < 0)
+            j += self.nCols();
+        if (i < 0 || i >= self.nRows())
+            throw py::index_error("matrix row out of range");
+        if (j < 0 || j >= self.nCols())
+            throw py::index_error("matrix col out of range");
+        self(i, j) = val; })
         // set value on row, slice over cols
         .def("__setitem__",
              [](Matrix<double, RowMajor> &self, std::tuple<int, py::slice> ind, double val)
