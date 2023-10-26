@@ -78,15 +78,25 @@ You can extract a rows or a columns from a matrix:
 
 some changes ...  
 
+========
+Contents
+========
+
+.. toctree::
+   ← Back to Github <https://github.com/DHL-ASC/DHL-LinAlg>
    
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
-   index
    install
+   examples
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Information:
 
+   changelog/index
 
 Indices and tables
 ==================

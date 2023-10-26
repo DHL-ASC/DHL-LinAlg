@@ -1,5 +1,5 @@
-Install
-=======
+Installation
+============
 
 Installation and running test examples can be done as follows:
 
