@@ -1,29 +1,63 @@
 import time
+import numpy as np
 
 from ASCsoft.bla import Matrix, ParallelComputing, NumThreads
 
-s = 1000
-print(f"initializing {s}x{s} matrices...\n")
-m = Matrix(s, s)
-n = Matrix(s, s)
-for i in range(s):
-    for j in range(s):
-        m[i, j] = i + j
-        n[i, j] = 2 * i + j
+s = 150
+numTestsPerS = 10
+maxS = 750
+incS = 25
 
+print("Opening file results.csv...\t")
+resFile = open("results-small.csv", "x")
 print("done.\n")
-print("Measuring with 1 thread...\n")
-start = time.time()
-c = m * n
-end = time.time()
-print(end - start)
-print("\ndone.\n")
+
+resFile.write(f"iteration\tthreads\ttime in ns\tmatrix size\tGMAC/s\n")
+
+while(s<=maxS):
+    print(f"initializing {s}x{s} matrices...\t")
+    m = Matrix(s, s)
+    n = Matrix(s, s)
+    for i in range(s):
+        for j in range(s):
+            m[i, j] = i + j
+            n[i, j] = 2 * i + j
+
+    print("done.\n")
+
+    singleThreadResults = np.empty(10) 
+    multiThreadResults = np.empty(10) 
+    nThreads = 1
+    for i in range(numTestsPerS):
+        print(f"{i}:")
+        print("\tMeasuring with 1 thread...\t",end="")
+        start = time.time_ns()
+        c = m * n
+        end = time.time_ns()
+        print("done.")
+        t = end - start
+        singleThreadResults[i] = t
+        print(f"\tt={t/1e9}s")
 
 
-with ParallelComputing():
-    print(f"Measuring with {NumThreads()} thread\n")
-    start = time.time()
-    d = m * n
-    end = time.time()
-print(end - start)
-print("\ndone.\n")
+
+        with ParallelComputing():
+            nThreads = NumThreads()
+            print(f"\tMeasuring with {NumThreads()} threads...\t",end="")
+            start = time.time_ns()
+            d = m * n
+            end = time.time_ns()
+            print("done.")
+            t = end - start
+            multiThreadResults[i] = t
+            print(f"\tt={t/1e9}s")
+
+
+
+    
+    resFile.write(f"{i}\t1\t{np.median(singleThreadResults)}\t{s}\t{s*s*s/np.median(singleThreadResults)}\n")
+    resFile.write(f"{i}\t{nThreads}\t{np.median(multiThreadResults)}\t{s}\t{s*s*s/np.median(multiThreadResults)}\n")
+
+    s += incS
+
+resFile.close()
