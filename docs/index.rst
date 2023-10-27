@@ -91,6 +91,7 @@ Contents
 
    install
    examples
+   api_reference
 
 .. toctree::
    :maxdepth: 1
