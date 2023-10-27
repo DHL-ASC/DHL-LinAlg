@@ -90,7 +90,7 @@ Contents
    :caption: Contents:
 
    install
-   examples
+   examples/index
    api_reference
 
 .. toctree::
