@@ -4,15 +4,15 @@ import numpy as np
 from ASCsoft.bla import Matrix, ParallelComputing, NumThreads
 
 s = 150
-numTestsPerS = 10
+numTestsPerS = 20
 maxS = 750
 incS = 25
 
 print("Opening file results.csv...\t")
-resFile = open("results-small.csv", "x")
+resFile = open("results.csv", "x")
 print("done.\n")
 
-resFile.write(f"iteration\tthreads\ttime in ns\tmatrix size\tGMAC/s\n")
+resFile.write(f"iterations\tthreads\ttime in ns\tmatrix size\tGMAC/s\n")
 
 while(s<=maxS):
     print(f"initializing {s}x{s} matrices...\t")
@@ -25,8 +25,8 @@ while(s<=maxS):
 
     print("done.\n")
 
-    singleThreadResults = np.empty(10) 
-    multiThreadResults = np.empty(10) 
+    singleThreadResults = np.empty(numTestsPerS) 
+    multiThreadResults = np.empty(numTestsPerS) 
     nThreads = 1
     for i in range(numTestsPerS):
         print(f"{i}:")
@@ -54,9 +54,11 @@ while(s<=maxS):
 
 
 
+        resFile.write(f"{i}\tsingle.1\t{singleThreadResults[i]}\t{s}\t{s*s*s/singleThreadResults[i]}\n")
+        resFile.write(f"{i}\tmulti.{nThreads}\t{multiThreadResults[i]}\t{s}\t{s*s*s/multiThreadResults[i]}\n")
     
-    resFile.write(f"{i}\t1\t{np.median(singleThreadResults)}\t{s}\t{s*s*s/np.median(singleThreadResults)}\n")
-    resFile.write(f"{i}\t{nThreads}\t{np.median(multiThreadResults)}\t{s}\t{s*s*s/np.median(multiThreadResults)}\n")
+    #resFile.write(f"{numTestsPerS}\tsingle.1\t{np.median(singleThreadResults)}\t{s}\t{s*s*s/np.median(singleThreadResults)}\n")
+    #resFile.write(f"{numTestsPerS}\tmulti.{nThreads}\t{np.median(multiThreadResults)}\t{s}\t{s*s*s/np.median(multiThreadResults)}\n")
 
     s += incS
 

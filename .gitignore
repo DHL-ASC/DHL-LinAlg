@@ -78,3 +78,4 @@ __pycache__/
 *.egg
 .ipynb_checkpoints
 
+*.db
