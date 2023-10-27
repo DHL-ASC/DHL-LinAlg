@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import sys
 
 from ASCsoft.bla import Matrix, ParallelComputing, NumThreads
 
@@ -30,7 +31,8 @@ while(s<=maxS):
     nThreads = 1
     for i in range(numTestsPerS):
         print(f"{i}:")
-        print("\tMeasuring with 1 thread...\t",end="")
+        sys.stdout.write("\tMeasuring with 1 thread...\t")
+        sys.stdout.flush()
         start = time.time_ns()
         c = m * n
         end = time.time_ns()
@@ -43,7 +45,8 @@ while(s<=maxS):
 
         with ParallelComputing():
             nThreads = NumThreads()
-            print(f"\tMeasuring with {NumThreads()} threads...\t",end="")
+            sys.stdout.write(f"\tMeasuring with {NumThreads()} threads...\t")
+            sys.stdout.flush()
             start = time.time_ns()
             d = m * n
             end = time.time_ns()
