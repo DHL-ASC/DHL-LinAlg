@@ -42,7 +42,8 @@ p <- ggplot(data,aes(x=matrix.size,y=GMAC.s,color=threads,group=threads))+
   ylab("GMAC/s") +
   xlab("Matrix Size")+
   scale_y_log10(minor_breaks = rep(1:9, 21)*(10^rep(-10:10, each=9)))+
-  scale_x_continuous(breaks = seq(150,750,by=50))
+  scale_x_continuous(breaks = seq(150,750,by=50))+
+  ggtitle(label="Matrix-Matrix Multiplication Speed")
   
   #+
   #vergleichsfunktionen
