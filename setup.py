@@ -3,8 +3,14 @@ from skbuild import setup
 _cmake_args = []
 
 test_deps = ["pytest", "numpy"]
+docs = ["sphinx", "myst-nb", "pandocfilters"]
+
+all_deps = test_deps + docs
+
 extras = {
     "test": test_deps,
+    "docs": docs,
+    "all": all_deps,
 }
 
 setup(

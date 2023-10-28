@@ -41,7 +41,7 @@ namespace bla
 PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
-    m.def("NumThreads", &ParallelComputing::getNumThreads);
+    m.def("NumThreads", &ParallelComputing::getNumThreads, "Get number of threads used");
 
     py::class_<ParallelComputing>(m, "ParallelComputing")
         .def(py::init<>())
@@ -52,8 +52,8 @@ PYBIND11_MODULE(bla, m)
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),
-             py::arg("size"), "create vector of given size")
-        .def("__len__", &Vector<double>::Size, "return size of vector")
+             py::arg("size"), "Create vector of given size")
+        .def("__len__", &Vector<double>::Size, "Return size of vector")
 
         .def("__setitem__", [](Vector<double> &self, int i, double v)
              {
@@ -105,7 +105,8 @@ PYBIND11_MODULE(bla, m)
 
     py::class_<Matrix<double, RowMajor>>(m, "Matrix", py::buffer_protocol())
         .def(py::init<size_t, size_t>(),
-             py::arg("rows"), py::arg("cols"), "Create a matrix of given size")
+             py::arg("rows"), py::arg("cols"),
+             "Create a matrix of given size")
         // getter
         .def("__getitem__",
              [](Matrix<double, RowMajor> self, std::tuple<int, int> ind)
@@ -261,24 +262,24 @@ PYBIND11_MODULE(bla, m)
         .def(
             "I", [](Matrix<double, RowMajor> &self)
             { return self.Inverse(); },
-            "Inverse of matrix")
+            "Return the inverse of the matrix")
         .def(
             "T", [](Matrix<double, RowMajor> &self)
             { return Matrix<double, RowMajor>(self.Transpose()); },
-            "Transpose of matrix")
+            "Return the transpose of the matrix")
         .def_property_readonly(
             "shape",
             [](const Matrix<double, RowMajor> &self)
             { return std::tuple(self.nRows(), self.nCols()); },
-            "Get matrix shape as (rows, cols)")
+            "Get matrix shape as tuple[rows, cols]")
         .def_property_readonly(
             "nrows", [](const Matrix<double, RowMajor> &self)
             { return self.nRows(); },
-            "Get number of rows of matrix")
+            "Return the number of rows of the matrix")
         .def_property_readonly(
             "ncols", [](const Matrix<double, RowMajor> &self)
             { return self.nCols(); },
-            "Get number of cols of matrix")
+            "Return the number of cols of the matrix")
         .def_buffer([](Matrix<double, RowMajor> &m) -> py::buffer_info
                     { return py::buffer_info(
                           m.Data(),                                /* Pointer to buffer */

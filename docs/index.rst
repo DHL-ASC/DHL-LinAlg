@@ -1,86 +1,63 @@
-.. ASC-bla documentation master file, created by
+.. DHL-LinAlg documentation master file, created by
    sphinx-quickstart on Tue Aug 29 06:39:02 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ASC-bla's documentation!
-===================================
+Welcome to DHL-LinAlg documentation!
+====================================
 
-ASC-bla is a C++ library for basic linear algebra operations.
-The library provides template classes **Vector** and **Matrix**.
-
-Installation is via git-clone:
-
-..  code-block::
-    
-    git clone https://github.com/TUWien-ASC/ASC-bla.git
+DHL-LinAlg is a simple linear algebra implementation in C++ providing classes such as **Vector** and **Matrix**.
+All classes are binded into python.
 
 
-To configure and build some tests do
+Quickstart
+===============
 
-..  code-block::
+Installation can be done as follows:
 
-    cd ASC-bla
-    mkdir build
-    cd build
-    cmake ..
-    make
-    
-
-To use ASC-bla in your code, set the compiler include path properly, and include the header files
-
-..  code-block::
-
-    #include <vector.h>
-    #include <matrix.h>
-
-All objects are implemented in the namespace bla. To use them with less typing, you can set
-
-..  code-block::
-    
-    using namespace bla;
-
-    
-
-You can create vectors and compute with vectors like:
-
-..  code-block:: cpp
-                 
-   Vector<double> x(5), y(5), z(5);
-   for (int i = 0; i < x.Size(); i++)
-      x(i) = i;
-   y = 5.0
-   z = x+3*y;
-   cout << "z = " << z << endl;
-
-
-For matrices you can choose between row-major (`RowMajor`) or column-major (`ColMajor`) storage,
-default is row-major.
-
-..  code-block:: cpp
-
-   Matrix<double,RowMajor> m1(5,3), m2(3,3);
-   for (int i = 0; i < m1.Height(); i++)
-     for (int j = 0; j < m1.Width(); j++)
-       m1(i,j) = i+j;
-   m2 = 3.7;
-   Matrix product = m1 * m2;
+..  code-block:: bash
    
-You can extract a rows or a columns from a matrix:
-
-..  code-block:: cpp
-
-   Vector col1 = product.Col(1);
+   git clone https://github.com/DHL-ASC/DHL-LinAlg.git
+   cd DHL-LinAlg
+   pip install . 
 
 
-some changes ...  
+Afterwards you can import the library in python
 
+..  code-block:: python
+
+   from ASCsoft.bla import Matrix
+
+   m = Matrix(10,10)
+   for i in range(10):
+      for j in range(10):
+         m[i,j] = i + 2 * j
+
+   print(m)
+
+
+
+
+========
+Contents
+========
+
+.. toctree::
+   ← Back to Github <https://github.com/DHL-ASC/DHL-LinAlg>
    
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
+   install
+   examples/index
+   api_reference
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Information:
+
+   changelog/index
 
 Indices and tables
 ==================
