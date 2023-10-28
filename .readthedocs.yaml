@@ -34,3 +34,6 @@ python:
      path: .
      extra_requirements:
        - all
+
+submodules:
+   include: all
