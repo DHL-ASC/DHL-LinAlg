@@ -47,7 +47,7 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
-        twine upload -r testpypi dist/*.whl
+        twine upload dist/*.whl
 
 
     # if this is a manual dispatch, upload to TestPyPI
@@ -92,7 +92,7 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
-        twine upload -r testpypi dist/*.tar.gz
+        twine upload dist/*.tar.gz
 
     # if this is a manual dispatch, upload to TestPyPI
     - name: Publish release to (test) pypi
