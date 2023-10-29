@@ -1,7 +1,7 @@
 ![DHLLinAlg Logo](https://raw.githubusercontent.com/DHL-ASC/DHL-LinAlg/main/img/dhl-linalg-banner.png)
 
 ![Build Status](https://github.com/shirnschall/dhl-linalg/actions/workflows/ci-pip.yml/badge.svg)
-[![Documentation Status](https://readthedocs.org/projects/dhl-linalg/badge/?version=latest)](https://dhl-linalg.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/dhl-linalg/badge/?version=stable)](https://dhl-linalg.readthedocs.io/en/latest/?badge=stable)
 
 --------------------------------------------------------------------------------
 
