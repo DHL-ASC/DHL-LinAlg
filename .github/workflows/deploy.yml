@@ -1,0 +1,48 @@
+name: pypi
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine pybind11 scikit-build
+
+    - name: Pull & update submodules recursively
+      run: |
+        git submodule update --init --recursive
+        git submodule update --recursive --remote
+
+    - name: Build distribution 📦
+      run: |
+        python setup.py sdist bdist_wheel
+
+    # if this is a release, upload to PyPI
+    - name: Publish release to pypi
+      uses: pypa/gh-action-pypi-publish@v1.8.10
+      if: github.event_name == 'release'
+      env:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+
+
+    # if this is a manual dispatch, upload to TestPyPI
+    - name: Publish release to (test) pypi
+      if: github.event_name == 'workflow_dispatch'
+      uses: pypa/gh-action-pypi-publish@v1.8.10
+      with:
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        repository-url: https://test.pypi.org/legacy/
