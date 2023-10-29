@@ -3,8 +3,8 @@ import pickle
 import pytest
 import numpy as np
 
-from ASCsoft.bla import Matrix
-from ASCsoft.bla import Vector
+from dhllinalg.bla import Matrix
+from dhllinalg.bla import Vector
 
 
 @pytest.fixture(name="v3")

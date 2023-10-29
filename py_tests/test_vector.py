@@ -1,4 +1,4 @@
-from ASCsoft.bla import Vector
+from dhllinalg.bla import Vector
 
 
 def test_add():

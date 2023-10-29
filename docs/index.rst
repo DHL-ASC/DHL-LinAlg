@@ -16,17 +16,15 @@ Quickstart
 Installation can be done as follows:
 
 ..  code-block:: bash
-   
-   git clone https://github.com/DHL-ASC/DHL-LinAlg.git
-   cd DHL-LinAlg
-   pip install . 
+
+   pip install dhllinalg 
 
 
 Afterwards you can import the library in python
 
 ..  code-block:: python
 
-   from ASCsoft.bla import Matrix
+   from dhllinalg.bla import Matrix
 
    m = Matrix(10,10)
    for i in range(10):

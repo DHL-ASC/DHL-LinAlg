@@ -1,16 +1,16 @@
 API Reference
 =============================
 
-ASCsoft.bla
+dhllinalg.bla
 -------------
 
-.. automodule:: ASCsoft.bla
+.. automodule:: dhllinalg.bla
     :members:
 
-    .. autoclass:: ASCsoft.bla.Vector
+    .. autoclass:: dhllinalg.bla.Vector
         :special-members: 
         :members:
         
-    .. autoclass:: ASCsoft.bla.Matrix
+    .. autoclass:: dhllinalg.bla.Matrix
         :special-members:
         :members:
