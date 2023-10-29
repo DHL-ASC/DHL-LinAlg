@@ -1,4 +1,5 @@
-![DHLLinAlg Logo](https://github.com/DHL-ASC/DHL-LinAlg/blob/f4e87de669bea49e46756f3e34607e4c32108668/img/dhl-linalg-banner.png)
+![DHLLinAlg Logo](https://raw.githubusercontent.com/DHL-ASC/DHL-LinAlg/main/img/dhl-linalg-banner.png)
+
 
 
 --------------------------------------------------------------------------------
