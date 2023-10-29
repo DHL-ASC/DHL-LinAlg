@@ -18,7 +18,7 @@ extras = {
 
 setup(
     name="dhllinalg",
-    version="0.1.0",
+    version="0.1.1",
     author="DHL-Team",
     license="LGPL2.1",
     packages=["dhllinalg"],
