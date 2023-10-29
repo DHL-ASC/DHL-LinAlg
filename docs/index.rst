@@ -26,7 +26,7 @@ Afterwards you can import the library in python
 
 ..  code-block:: python
 
-   from ASCsoft.bla import Matrix
+   from dhllinalg.bla import Matrix
 
    m = Matrix(10,10)
    for i in range(10):

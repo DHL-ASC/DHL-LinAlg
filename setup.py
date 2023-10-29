@@ -14,11 +14,11 @@ extras = {
 }
 
 setup(
-    name="ASCsoft",
+    name="dhllinalg",
     version="0.0.1",
     author="DHL",
     license="MIT",
-    packages=["ASCsoft"],
+    packages=["dhllinalg"],
     tests_require=test_deps,
     extras_require=extras,
     cmake_args=_cmake_args,

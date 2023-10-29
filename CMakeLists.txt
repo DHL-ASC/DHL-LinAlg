@@ -23,9 +23,9 @@ pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanag
 
 # target_link_libraries(bla PRIVATE pybind11::module external_dependencies/HPC/src/timer.h external_dependencies/HPC/src/taskmanager.h external_dependencies/HPC/concurrentqueue/concurrentqueue.h)
 
-install (TARGETS bla DESTINATION ASCsoft)
-install (FILES src/vector.h DESTINATION ASCsoft/include)
-install (FILES src/matrix.h DESTINATION ASCsoft/include)
-install (FILES external_dependencies/HPC/src/taskmanager.h DESTINATION ASCsoft/include)
-install (FILES external_dependencies/HPC/src/timer.h DESTINATION ASCsoft/include)
-# install (FILES external_dependencies/HPC/concurrentqueue/concurrentqueue.h DESTINATION ASCsoft/include)
+install (TARGETS bla DESTINATION dhllinalg)
+install (FILES src/vector.h DESTINATION dhllinalg/include)
+install (FILES src/matrix.h DESTINATION dhllinalg/include)
+install (FILES external_dependencies/HPC/src/taskmanager.h DESTINATION dhllinalg/include)
+install (FILES external_dependencies/HPC/src/timer.h DESTINATION dhllinalg/include)
+# install (FILES external_dependencies/HPC/concurrentqueue/concurrentqueue.h DESTINATION dhllinalg/include)

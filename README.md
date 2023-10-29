@@ -26,6 +26,3 @@ pip install .
 
 #### Requirements
 pybind11
-
-
-
