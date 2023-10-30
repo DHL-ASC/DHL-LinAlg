@@ -1,5 +1,7 @@
+from pathlib import Path
+
 import time
-import numpy as np
+import pandas as pd
 import sys
 
 from dhllinalg.bla import Matrix, ParallelComputing, NumThreads
@@ -9,11 +11,18 @@ numTestsPerS = 20
 maxS = 750
 incS = 25
 
-print("Opening file results.csv...\t")
-resFile = open("results.csv", "x")
-print("done.\n")
+file_name = "results.csv"
+if Path(file_name).is_file():
+    print(
+        f"File with name: {file_name} already exists. Either change the name or delete the old file"
+    )
+    sys.exit()
 
-resFile.write(f"iterations\tthreads\ttime in ns\tmatrix size\tGMAC/s\n")
+iterations = []
+threads = []
+time_in_ns = []
+matrix_size = []
+gmacs = []
 
 while s <= maxS:
     print(f"initializing {s}x{s} matrices...\t")
@@ -26,8 +35,6 @@ while s <= maxS:
 
     print("done.\n")
 
-    singleThreadResults = np.empty(numTestsPerS)
-    multiThreadResults = np.empty(numTestsPerS)
     nThreads = 1
     for i in range(numTestsPerS):
         print(f"{i}:")
@@ -38,7 +45,11 @@ while s <= maxS:
         end = time.time_ns()
         print("done.")
         t = end - start
-        singleThreadResults[i] = t
+        iterations.append(i)
+        threads.append(nThreads)
+        time_in_ns.append(t)
+        matrix_size.append(s)
+        gmacs.append(s**3 / t)
         print(f"\tt={t/1e9}s")
 
         with ParallelComputing():
@@ -50,19 +61,23 @@ while s <= maxS:
             end = time.time_ns()
             print("done.")
             t = end - start
-            multiThreadResults[i] = t
+            iterations.append(i)
+            threads.append(nThreads)
+            time_in_ns.append(t)
+            matrix_size.append(s)
+            gmacs.append(s**3 / t)
             print(f"\tt={t/1e9}s")
-
-        resFile.write(
-            f"{i}\tsingle.1\t{singleThreadResults[i]}\t{s}\t{s*s*s/singleThreadResults[i]}\n"
-        )
-        resFile.write(
-            f"{i}\tmulti.{nThreads}\t{multiThreadResults[i]}\t{s}\t{s*s*s/multiThreadResults[i]}\n"
-        )
-
-    # resFile.write(f"{numTestsPerS}\tsingle.1\t{np.median(singleThreadResults)}\t{s}\t{s*s*s/np.median(singleThreadResults)}\n")
-    # resFile.write(f"{numTestsPerS}\tmulti.{nThreads}\t{np.median(multiThreadResults)}\t{s}\t{s*s*s/np.median(multiThreadResults)}\n")
 
     s += incS
 
-resFile.close()
+df = pd.DataFrame(
+    {
+        "iterations": iterations,
+        "threads": threads,
+        "time_in_ns": time_in_ns,
+        "matrix_size": matrix_size,
+        "gmacs": gmacs,
+    }
+)
+
+df.to_csv(file_name, index=False)
