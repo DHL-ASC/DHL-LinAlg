@@ -18,7 +18,7 @@ This library is part of a scientific programing course at TU Vienna. Here are no
 pip install dhllinalg
 ```
 
-### Building from sorce:
+### Building from source:
 
 #### Requirements
 pybind11, cmake, scikit-build
