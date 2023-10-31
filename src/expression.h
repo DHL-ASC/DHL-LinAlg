@@ -60,6 +60,16 @@ namespace bla
             sum += v1(i) * v2(i);
         return sum;
     }
+    
+    auto View() const { return VectorView(size_, dist_, data_); }
+    size_t Size() const { return size_; }
+    auto Dist() const { return dist_; }
+    T & operator()(size_t i) { return data_[dist_*i]; }
+    const T & operator()(size_t i) const { return data_[dist_*i]; }
+    
+    auto Range(size_t first, size_t next) const {
+      return VectorView(next-first, dist_, data_+first);
+    }
 
     template <typename T>
     std::ostream &operator<<(std::ostream &ost, const VecExpr<T> &v)
