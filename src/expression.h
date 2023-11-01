@@ -1,7 +1,7 @@
 #ifndef FILE_EXPRESSION_H
 #define FILE_EXPRESSION_H
 
-
+#include <simd.h>
 
 namespace bla
 {
@@ -12,6 +12,8 @@ namespace bla
     public:
         auto Upcast() const { return static_cast<const T &>(*this); }
         size_t Size() const { return Upcast().Size(); }
+        // const T *Data() const { return Upcast().Data(); }
+        auto Data() const { return Upcast().Data(); }
         auto operator()(size_t i) const { return Upcast()(i); }
     };
 
@@ -55,10 +57,19 @@ namespace bla
     template <typename TA, typename TB>
     auto operator*(const VecExpr<TA> &v1, const VecExpr<TB> &v2)
     {
-        auto sum = 0.0;
-        for (size_t i = 0; i < v1.Size(); i++)
-            sum += v1(i) * v2(i);
-        return sum;
+        size_t i = 0;
+        size_t wv = v1.Size() - v1.Size() % 4;
+        ASC_HPC::SIMD<double, 4> res(0.0);
+        for (; i < wv; i += 4)
+        {
+            ASC_HPC::SIMD<double, 4> s1(v1.Data() + i);
+            ASC_HPC::SIMD<double, 4> s2(v2.Data() + i);
+            res = res + s1 * s2;
+        }
+        double r = ASC_HPC::HSum(res);
+        for (; i < v1.Size(); i++)
+            r += v1(i) * v2(i);
+        return r;
     }
 
     template <typename T>
