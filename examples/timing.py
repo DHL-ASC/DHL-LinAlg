@@ -4,12 +4,12 @@ import time
 import pandas as pd
 import sys
 
-from dhllinalg.bla import Matrix, ParallelComputing, NumThreads
+from dhllinalg.bla import Matrix, ParallelComputing, NumThreads, InnerProduct
 
-s = 150
+s = 160
 numTestsPerS = 20
-maxS = 750
-incS = 25
+maxS = 736
+incS = 32
 
 file_name = "results.csv"
 if Path(file_name).is_file():
@@ -41,7 +41,8 @@ while s <= maxS:
         sys.stdout.write("\tMeasuring with 1 thread...\t")
         sys.stdout.flush()
         start = time.time_ns()
-        c = m * n
+        c = InnerProduct(m , n)
+        # InnerProduct(m , n)
         end = time.time_ns()
         print("done.")
         t = end - start

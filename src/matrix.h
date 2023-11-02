@@ -238,34 +238,34 @@ namespace bla
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
         size_t i = 0;
-        size_t rows_res = res.nRows() / 2;
-        size_t cols_res = res.nCols() / 8;
-
-        std::cout << rows_res << std::endl;
-        std::cout << cols_res << std::endl;
-        for (; i < res.nRows(); i += 2)
+        for (; i < res.nRows()-2; i += 2)
         {
-            for (size_t j = 0; j < res.nCols(); j += 8)
+            for (size_t j = 0; j < res.nCols()-16; j += 16)
             {
-                ASC_HPC::SIMD<double, 4> sum00(0.0);
-                ASC_HPC::SIMD<double, 4> sum01(0.0);
-                ASC_HPC::SIMD<double, 4> sum10(0.0);
-                ASC_HPC::SIMD<double, 4> sum11(0.0);
+                ASC_HPC::SIMD<double, 16> sum00(0.0);
+                ASC_HPC::SIMD<double, 16> sum10(0.0);
+                // ASC_HPC::SIMD<double, 16> sum20(0.0);
+                // ASC_HPC::SIMD<double, 16> sum30(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
-                    ASC_HPC::SIMD<double, 4> y1(m2.Data() + k * m2.nCols() + j);
-                    ASC_HPC::SIMD<double, 4> y2(m2.Data() + k * m2.nCols() + j + 4);
+                    ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
 
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y1, sum00);
-                    sum01 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y2, sum01);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y1, sum10);
-                    sum11 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y2, sum11);
+                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i, k)), y1, sum00);
+                    
+                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+1, k)), y1, sum10);
+                    
+                    // sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+2, k)), y1, sum20);
+                    
+                    // sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+3, k)), y1, sum30);
                 }
 
                 sum00.Store(res.Data() + i * res.nCols() + j);
-                sum01.Store(res.Data() + i * res.nCols() + j + 4);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-                sum11.Store(res.Data() + (i + 1) * res.nCols() + j + 4);
+
+                sum10.Store(res.Data() + (i+1) * res.nCols() + j);
+
+                // sum20.Store(res.Data() + (i+2) * res.nCols() + j);
+
+                // sum30.Store(res.Data() + (i+3) * res.nCols() + j);
             }
         }
 

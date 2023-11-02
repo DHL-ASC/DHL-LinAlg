@@ -1,7 +1,10 @@
 #include <matrix.h>
 #include <vector.h>
+#include <chrono>
 
 #include <iostream>
+
+using namespace std;
 
 int main()
 {
@@ -81,6 +84,23 @@ int main()
 
         std::cout << "M*x = " << res << std::endl;
     }
+    {
+    bla::Matrix<double> m(32,32);
+    bla::Matrix<double> n(32,32);
+    for(int i=0;i<32;++i){
+        for(int j=0;j<32;++j){
+            m(i,j) = i+j;
+            n(i,j) = 2*i+j;
+        }
+    }
+    auto start = std::chrono::high_resolution_clock::now();
+    auto a = bla::InnerProduct(m,n);
 
-
+    auto end = std::chrono::high_resolution_clock::now();
+    double time = std::chrono::duration<double, std::milli>(end-start).count();
+    cout << "a(0,0) = " << a(0,0) << endl;
+    cout <<" time = " << time 
+           << " ms, GFlops = " << (32*32*32)/time/1e6
+           << endl;
+    }
 }
