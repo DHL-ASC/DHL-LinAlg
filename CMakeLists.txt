@@ -16,10 +16,10 @@ list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_DIR}")
 find_package(pybind11 CONFIG REQUIRED)
 
 
-add_executable (test_vector tests/test_vector.cc)
-add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc)
+add_executable (test_vector tests/test_vector.cc external_dependencies/HPC/src/simd.h)
+add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 
-pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc)
+pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 
 # target_link_libraries(bla PRIVATE pybind11::module external_dependencies/HPC/src/timer.h external_dependencies/HPC/src/taskmanager.h external_dependencies/HPC/concurrentqueue/concurrentqueue.h)
 
