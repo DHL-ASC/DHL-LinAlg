@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(ASC_bla)
 
 set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
 
 include_directories(src external_dependencies/HPC/src external_dependencies/HPC/concurrentqueue)
@@ -19,12 +20,12 @@ find_package(pybind11 CONFIG REQUIRED)
 add_executable (test_vector tests/test_vector.cc external_dependencies/HPC/src/simd.h)
 add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 
-target_sources(test_vector PRIVATE external_dependencies/HPC/src/simd.h)
-target_sources(test_matrix PRIVATE external_dependencies/HPC/src/simd.h)
+# target_sources(test_vector PUBLIC external_dependencies/HPC/src/simd.h)
+# target_sources(test_matrix PUBLIC external_dependencies/HPC/src/simd.h)
 
 pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 
-target_sources(bla PRIVATE external_dependencies/HPC/src/simd.h)
+# target_sources(bla PUBLIC external_dependencies/HPC/src/simd.h)
 # target_link_libraries(bla PRIVATE pybind11::module external_dependencies/HPC/src/timer.h external_dependencies/HPC/src/taskmanager.h external_dependencies/HPC/concurrentqueue/concurrentqueue.h)
 
 install (TARGETS bla DESTINATION dhllinalg)
