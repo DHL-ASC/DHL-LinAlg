@@ -6,6 +6,7 @@
 #include <exception>
 #include "expression.h"
 #include "vector.h"
+#include "simd.h"
 
 #include <taskmanager.h>
 
@@ -35,12 +36,11 @@ namespace bla
         template <typename TB>
         MatrixView &operator=(const MatExpr<TB> &m2)
         {
-            ASC_HPC::TaskManager::RunParallel([this, &m2] (int id, int numThreads)
-            {
+            ASC_HPC::TaskManager::RunParallel([this, &m2](int id, int numThreads)
+                                              {
                 for (size_t i = id; i < this->rows_; i+=numThreads)
                     for (size_t j = 0; j < this->cols_; j++)
-                        (*this)(i, j) = m2(i, j);
-            });
+                        (*this)(i, j) = m2(i, j); });
             return *this;
         }
 
@@ -55,7 +55,7 @@ namespace bla
         size_t nRows() const { return rows_; }
         size_t nCols() const { return cols_; }
         T *Data() { return data_; }
-        const T *Data() const { return data_; }
+        T *Data() const { return data_; }
         T &operator()(size_t i) { return data_[i]; }
         const T &operator()(size_t i) const { return data_[i]; }
         T &operator()(size_t i, size_t j)
@@ -231,6 +231,42 @@ namespace bla
             ost << "\n ";
         }
         return ost;
+    }
+
+    template <typename T>
+    Matrix<T, RowMajor> InnerProduct(const MatrixView<T, RowMajor> &m1, const MatrixView<T, RowMajor> &m2)
+    {
+        Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
+        size_t i = 0;
+        size_t rows_res = res.nRows() / 2;
+        size_t cols_res = res.nCols() / 8;
+
+        std::cout << rows_res << std::endl;
+        std::cout << cols_res << std::endl;
+        for (; i < res.nRows(); i += 2)
+        {
+            for (size_t j = 0; j < res.nCols(); j += 8)
+            {
+                ASC_HPC::SIMD<double, 4> sum00(0.0);
+                ASC_HPC::SIMD<double, 4> sum01(0.0);
+                ASC_HPC::SIMD<double, 4> sum10(0.0);
+                ASC_HPC::SIMD<double, 4> sum11(0.0);
+                for (size_t k = 0; k < m2.nRows(); k++)
+                {
+                    sum00 += m1(i, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + j);
+                    sum01 += m1(i, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + 4 + j);
+                    sum10 += m1(i + 1, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + j);
+                    sum11 += m1(i + 1, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + 4 + j);
+                }
+
+                sum00.Store(res.Data() + i * res.nCols() + j);
+                sum01.Store(res.Data() + i * res.nCols() + j + 4);
+                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
+                sum11.Store(res.Data() + (i + 1) * res.nCols() + j + 4);
+            }
+        }
+
+        return res;
     }
 
 } // namespace bla

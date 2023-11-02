@@ -43,6 +43,13 @@ PYBIND11_MODULE(bla, m)
     m.doc() = "Basic linear algebra module"; // optional module docstring
     m.def("NumThreads", &ParallelComputing::getNumThreads, "Get number of threads used");
 
+    m.def(
+        "InnerProduct",
+        [](Matrix<double, RowMajor> &self, Matrix<double, RowMajor> &other)
+        {
+            return InnerProduct(self, other);
+        },
+        "InnerProduct");
     py::class_<ParallelComputing>(m, "ParallelComputing")
         .def(py::init<>())
         .def("__enter__", &ParallelComputing::Enter)
