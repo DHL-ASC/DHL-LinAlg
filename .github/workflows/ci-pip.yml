@@ -2,8 +2,7 @@ name: "Pip"
 
 on:
   push:
-    branches: 
-      - main
+    branches: [ "main", "hpc"]
   pull_request:
 
 jobs:
