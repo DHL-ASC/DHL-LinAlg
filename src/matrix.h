@@ -6,7 +6,7 @@
 #include <exception>
 #include "expression.h"
 #include "vector.h"
-#include "simd.h"
+#include <simd.h>
 
 #include <taskmanager.h>
 
@@ -253,10 +253,13 @@ namespace bla
                 ASC_HPC::SIMD<double, 4> sum11(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
-                    sum00 += m1(i, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + j);
-                    sum01 += m1(i, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + 4 + j);
-                    sum10 += m1(i + 1, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + j);
-                    sum11 += m1(i + 1, k) * ASC_HPC::SIMD<double, 4>(m2.Data() + k * m2.nCols() + 4 + j);
+                    ASC_HPC::SIMD<double, 4> y1(m2.Data() + k * m2.nCols() + j);
+                    ASC_HPC::SIMD<double, 4> y2(m2.Data() + k * m2.nCols() + j + 4);
+
+                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y1, sum00);
+                    sum01 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y2, sum01);
+                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y1, sum10);
+                    sum11 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y2, sum11);
                 }
 
                 sum00.Store(res.Data() + i * res.nCols() + j);
