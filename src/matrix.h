@@ -311,6 +311,8 @@ namespace bla
         return res;
     }
 
+    void (*name)(int arg1,int arg2);
+
     //compile inner product for small matrix sizes as template
     Matrix<double, RowMajor> (*dispatch_MatMatMult[15])(const MatrixView<double, RowMajor> &, const MatrixView<double, RowMajor> &);
     auto init_MatMatMult = [] ()
@@ -336,7 +338,7 @@ namespace bla
     }();
 
     Matrix<double, RowMajor> compiledInnerProduct(const MatrixView<double, RowMajor> &m1, const MatrixView<double, RowMajor> &m2){
-        size_t wa = m1.nCols()>14?14:m1.nCols();
+        size_t wa = m1.nCols()>224?14:(m1.nCols()/16-1);
         return (*dispatch_MatMatMult[wa])(m1,m2);
     }
 
