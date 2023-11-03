@@ -125,4 +125,26 @@ int main()
            << " ms, GFlops = " << (k*k*k)/time/1e6
            << endl;
     }
+    cout << "\n\ntest InnerProduct:\n\n";
+    {
+        int rm = 16;
+        int cm = 9;
+        int rn = 9;
+        int cn = 16;
+        bla::Matrix<double> m(rm,cm);
+        bla::Matrix<double> n(rn,cn);
+
+        for(int i=0;i<rm;++i){
+            for(int j=0;j<cn;++j){
+                m(i,j) = 1;
+            }
+        }
+        for(int i=0;i<rn;++i){
+            for(int j=0;j<cn;++j){
+                n(i,j) = 1;
+            }
+        }
+
+        cout << bla::InnerProduct(m,n) <<endl;
+    }
 }

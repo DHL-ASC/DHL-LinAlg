@@ -47,7 +47,7 @@ PYBIND11_MODULE(bla, m)
         "InnerProduct",
         [](Matrix<double, RowMajor> &self, Matrix<double, RowMajor> &other)
         {
-            return compiledInnerProduct(self, other);
+            return InnerProduct(self, other);
         },
         "InnerProduct");
     py::class_<ParallelComputing>(m, "ParallelComputing")
