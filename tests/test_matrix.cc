@@ -145,6 +145,6 @@ int main()
             }
         }
 
-        cout << bla::InnerProduct(m,n) <<endl;
+        cout << bla::InnerProduct(n,m) <<endl;
     }
 }

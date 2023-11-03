@@ -23,7 +23,7 @@ add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/t
 # target_sources(test_vector PUBLIC external_dependencies/HPC/src/simd.h)
 # target_sources(test_matrix PUBLIC external_dependencies/HPC/src/simd.h)
 
-pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
+pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h src/matrix.h)
 
 # target_sources(bla PUBLIC external_dependencies/HPC/src/simd.h)
 # target_link_libraries(bla PRIVATE pybind11::module external_dependencies/HPC/src/timer.h external_dependencies/HPC/src/taskmanager.h external_dependencies/HPC/concurrentqueue/concurrentqueue.h)
