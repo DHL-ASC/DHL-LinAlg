@@ -163,7 +163,7 @@ PYBIND11_MODULE(bla, m)
                  size_t row_start, row_stop, row_step, row_n;
                  size_t col_start, col_stop, col_step, col_n;
                  InitSlice(row_slice, self.nRows(), row_start, row_stop, row_step, row_n);
-                 InitSlice(col_slice, self.nRows(), col_start, col_stop, col_step, col_n);
+                 InitSlice(col_slice, self.nCols(), col_start, col_stop, col_step, col_n);
                  return Matrix<double, RowMajor>(self.Rows(row_start, row_stop).Cols(col_start, col_stop));
              })
         // setter
@@ -215,7 +215,7 @@ PYBIND11_MODULE(bla, m)
                  size_t row_start, row_stop, row_step, row_n;
                  size_t col_start, col_stop, col_step, col_n;
                  InitSlice(row_slice, self.nRows(), row_start, row_stop, row_step, row_n);
-                 InitSlice(col_slice, self.nRows(), col_start, col_stop, col_step, col_n);
+                 InitSlice(col_slice, self.nCols(), col_start, col_stop, col_step, col_n);
                  self.Rows(row_start, row_stop).Cols(col_start, col_stop) = val;
              })
         .def("__add__",
