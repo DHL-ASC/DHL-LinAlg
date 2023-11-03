@@ -277,14 +277,14 @@ namespace bla
     {
         Matrix<double, RowMajor> res(SIZE, SIZE);
         size_t i = 0;
-        for (; i < SIZE-2; i += 2)
+        for (; i < SIZE-4; i += 4)
         {
             for (size_t j = 0; j < SIZE-16; j += 16)
             {
                 ASC_HPC::SIMD<double, 16> sum00(0.0);
                 ASC_HPC::SIMD<double, 16> sum10(0.0);
-                // ASC_HPC::SIMD<double, 16> sum20(0.0);
-                // ASC_HPC::SIMD<double, 16> sum30(0.0);
+                ASC_HPC::SIMD<double, 16> sum20(0.0);
+                ASC_HPC::SIMD<double, 16> sum30(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
                     ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
@@ -293,18 +293,18 @@ namespace bla
                     
                     sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+1, k)), y1, sum10);
                     
-                    // sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+2, k)), y1, sum20);
+                    sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+2, k)), y1, sum20);
                     
-                    // sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+3, k)), y1, sum30);
+                    sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+3, k)), y1, sum30);
                 }
 
                 sum00.Store(res.Data() + i * res.nCols() + j);
 
                 sum10.Store(res.Data() + (i+1) * res.nCols() + j);
 
-                // sum20.Store(res.Data() + (i+2) * res.nCols() + j);
+                sum20.Store(res.Data() + (i+2) * res.nCols() + j);
 
-                // sum30.Store(res.Data() + (i+3) * res.nCols() + j);
+                sum30.Store(res.Data() + (i+3) * res.nCols() + j);
             }
         }
 
@@ -312,7 +312,7 @@ namespace bla
     }
 
     //compile inner product for small matrix sizes as template
-    Matrix<double, RowMajor> (*dispatch_MatMatMult[9])(const MatrixView<double, RowMajor> &, const MatrixView<double, RowMajor> &);
+    Matrix<double, RowMajor> (*dispatch_MatMatMult[15])(const MatrixView<double, RowMajor> &, const MatrixView<double, RowMajor> &);
     auto init_MatMatMult = [] ()
     {
         dispatch_MatMatMult[0] = &smallInnerProduct<16>;
@@ -323,14 +323,20 @@ namespace bla
         dispatch_MatMatMult[5] = &smallInnerProduct<96>;
         dispatch_MatMatMult[6] = &smallInnerProduct<112>;
         dispatch_MatMatMult[7] = &smallInnerProduct<128>;
+        dispatch_MatMatMult[8] = &smallInnerProduct<144>;
+        dispatch_MatMatMult[9] = &smallInnerProduct<160>;
+        dispatch_MatMatMult[10] = &smallInnerProduct<176>;
+        dispatch_MatMatMult[11] = &smallInnerProduct<192>;
+        dispatch_MatMatMult[12] = &smallInnerProduct<208>;
+        dispatch_MatMatMult[13] = &smallInnerProduct<224>;
         // Iterate<std::size(dispatch_multAB)-1> ([&] (auto i)
         // { dispatch_multAB[i] = &MultMatMat_intern; });
-        dispatch_MatMatMult[8] = &InnerProduct<double, RowMajor>;
+        dispatch_MatMatMult[14] = &InnerProduct<double, RowMajor>;
         return 1;
     }();
 
     Matrix<double, RowMajor> compiledInnerProduct(const MatrixView<double, RowMajor> &m1, const MatrixView<double, RowMajor> &m2){
-        size_t wa = m1.nCols()>8?8:m1.nCols();
+        size_t wa = m1.nCols()>14?14:m1.nCols();
         return (*dispatch_MatMatMult[wa])(m1,m2);
     }
 
