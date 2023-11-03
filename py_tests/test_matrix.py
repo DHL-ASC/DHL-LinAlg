@@ -63,6 +63,9 @@ def test_matrix_slicing(m3):
     assert isinstance(y, Vector)
     assert len(y) == 2
     assert np.array_equal(sub_matrix, np.array([[0, 2], [1, 3]]))
+    n = Matrix(10, 5)
+    n[:, :] = 1
+    assert np.array_equal(np.asarray(n), np.ones((10, 5)))
 
 
 def test_matrix_buffer_and_transpose(m3):
