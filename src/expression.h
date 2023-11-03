@@ -66,8 +66,18 @@ namespace bla
             ASC_HPC::SIMD<double, 16> s1(v1.Data() + i);
             ASC_HPC::SIMD<double, 16> s2(v2.Data() + i);
             res16 = ASC_HPC::FMA(s1 , s2, res16);
+            std::cout << ASC_HPC::HSum(res16) << std::endl;
         }
-        r = ASC_HPC::HSum(res16);
+        r += ASC_HPC::HSum(res16);
+
+        ASC_HPC::SIMD<double, 8> res8(0.0);
+        for (;v1.Size()>7 && i < v1.Size()-7; i += 8)
+        {
+            ASC_HPC::SIMD<double, 8> s1(v1.Data() + i);
+            ASC_HPC::SIMD<double, 8> s2(v2.Data() + i);
+            res8 = ASC_HPC::FMA(s1 , s2, res8);
+        }
+        r += ASC_HPC::HSum(res8);
 
         ASC_HPC::SIMD<double, 4> res4(0.0);
         for (;v1.Size()>3 && i < v1.Size()-3; i += 4)
@@ -76,10 +86,12 @@ namespace bla
             ASC_HPC::SIMD<double, 4> s2(v2.Data() + i);
             res4 = ASC_HPC::FMA(s1 , s2, res4);
         }
-        r = ASC_HPC::HSum(res4);
+            r += ASC_HPC::HSum(res4);
 
         for (; i < v1.Size(); i++)
             r += v1(i) * v2(i);
+        
+        std::cout << r << std::endl;
         return r;
     }
 

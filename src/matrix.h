@@ -239,13 +239,13 @@ namespace bla
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
         size_t i = 0;
-        std::cout << res.nCols() << std::endl;
+        //std::cout << res.nCols() << std::endl;
         for (; res.nRows()>1 && i < res.nRows() - 1; i += 2)
         {
             size_t j = 0;
             for (; res.nCols()>15 && j < res.nCols() - 15; j += 16)
             {
-                std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< std::endl;
                 ASC_HPC::SIMD<double, 16> sum00(0.0);
                 ASC_HPC::SIMD<double, 16> sum10(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -259,7 +259,7 @@ namespace bla
             }
             for (; res.nCols()>7 &&  j < res.nCols() - 7; j += 8)
             {
-                std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< std::endl;
                 ASC_HPC::SIMD<double, 8> sum00(0.0);
                 ASC_HPC::SIMD<double, 8> sum10(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -273,7 +273,7 @@ namespace bla
             }
             for (; res.nCols()>3 &&  j < res.nCols() - 3; j += 4)
             {
-                std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< std::endl;
                 ASC_HPC::SIMD<double, 4> sum00(0.0);
                 ASC_HPC::SIMD<double, 4> sum10(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -301,7 +301,7 @@ namespace bla
             // }
             for (; j < res.nCols(); ++j)
             {
-                std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< std::endl;
                 res(i, j) = 0;
                 res(i + 1, j) = 0;
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -316,7 +316,7 @@ namespace bla
             size_t j = 0;
             for (; res.nCols()>15 && j < res.nCols() - 15; j += 16)
             {
-                std::cout<<"simd16, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"simd16, (i,j)=" << i << ", " << j<< std::endl;
                 ASC_HPC::SIMD<double, 16> sum00(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
@@ -327,7 +327,7 @@ namespace bla
             }
             for (; res.nCols()>7 && j < res.nCols() - 7; j += 8)
             {
-                std::cout<<"simd8, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"simd8, (i,j)=" << i << ", " << j<< std::endl;
                 ASC_HPC::SIMD<double, 8> sum00(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
@@ -338,7 +338,7 @@ namespace bla
             }
             for (; res.nCols()>3 && j < res.nCols() - 3; j += 4)
             {
-                std::cout<<"simd4, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"simd4, (i,j)=" << i << ", " << j<< std::endl;
                 ASC_HPC::SIMD<double, 4> sum00(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
@@ -360,7 +360,7 @@ namespace bla
             // }
             for (; j < res.nCols(); ++j)
             {
-                std::cout<<"simd0, (i,j)=" << i << ", " << j<< std::endl;
+                //std::cout<<"simd0, (i,j)=" << i << ", " << j<< std::endl;
                 res(i, j) = 0;
                 for (size_t k = 0; k < m2.nRows(); k++)
                     res(i, j) += m1(i, k) * m2(k, j);
