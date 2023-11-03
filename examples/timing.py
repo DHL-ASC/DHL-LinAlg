@@ -35,13 +35,13 @@ while s <= maxS:
 
     print("done.\n")
 
-    nThreads = 1
     for i in range(numTestsPerS):
+        nThreads = 1
         print(f"{i}:")
-        sys.stdout.write("\tMeasuring with 1 thread...\t")
+        sys.stdout.write(f"\tMeasuring with {nThreads} thread...\t")
         sys.stdout.flush()
         start = time.time_ns()
-        c = InnerProduct(m , n)
+        c = InnerProduct(m, n)
         # InnerProduct(m , n)
         end = time.time_ns()
         print("done.")
