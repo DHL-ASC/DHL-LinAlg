@@ -7,6 +7,8 @@
 /.vscode/*
 .vscode/*
 
+# examples timing output
+/examples/*.csv
 
 # Compiled Object files
 **/.DS_Store
