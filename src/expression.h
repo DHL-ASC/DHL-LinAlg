@@ -58,15 +58,26 @@ namespace bla
     auto operator*(const VecExpr<TA> &v1, const VecExpr<TB> &v2)
     {
         size_t i = 0;
-        size_t wv = v1.Size() - v1.Size() % 4;
-        ASC_HPC::SIMD<double, 4> res(0.0);
-        for (; i < wv; i += 4)
+        double r = 0;
+
+        ASC_HPC::SIMD<double, 16> res16(0.0);
+        for (;v1.Size()>15 && i < v1.Size()-15; i += 16)
+        {
+            ASC_HPC::SIMD<double, 16> s1(v1.Data() + i);
+            ASC_HPC::SIMD<double, 16> s2(v2.Data() + i);
+            res16 = ASC_HPC::FMA(s1 , s2, res16);
+        }
+        r = ASC_HPC::HSum(res16);
+
+        ASC_HPC::SIMD<double, 4> res4(0.0);
+        for (;v1.Size()>3 && i < v1.Size()-3; i += 4)
         {
             ASC_HPC::SIMD<double, 4> s1(v1.Data() + i);
             ASC_HPC::SIMD<double, 4> s2(v2.Data() + i);
-            res = res + s1 * s2;
+            res4 = ASC_HPC::FMA(s1 , s2, res4);
         }
-        double r = ASC_HPC::HSum(res);
+        r = ASC_HPC::HSum(res4);
+
         for (; i < v1.Size(); i++)
             r += v1(i) * v2(i);
         return r;
