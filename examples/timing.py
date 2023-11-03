@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 import pandas as pd
 import sys
+import os
 
 from dhllinalg.bla import Matrix, ParallelComputing, NumThreads, InnerProduct
 
@@ -13,10 +14,14 @@ incS = 16
 
 file_name = "results.csv"
 if Path(file_name).is_file():
-    print(
-        f"File with name: {file_name} already exists. Either change the name or delete the old file"
-    )
-    sys.exit()
+    if "-y" in str(sys.argv):
+        print("deleting file")
+        os.remove(file_name)
+    else:
+        print(
+            f"File with name: {file_name} already exists. Either change the name or delete the old file"
+        )
+        sys.exit()
 
 iterations = []
 threads = []
