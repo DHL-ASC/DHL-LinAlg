@@ -9,6 +9,7 @@
 #include <simd.h>
 
 #include <taskmanager.h>
+namespace py = pybind11;
 
 namespace bla
 {
@@ -236,6 +237,7 @@ namespace bla
     template <typename T, ORDERING ORD>
     Matrix<T, ORD> InnerProduct(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
     {
+        py::print("InnerProduct");
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
         size_t i = 0;
 
