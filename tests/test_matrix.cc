@@ -85,10 +85,11 @@ int main()
         std::cout << "M*x = " << res << std::endl;
     }
     {
-    bla::Matrix<double> m(32,32);
-    bla::Matrix<double> n(32,32);
-    for(int i=0;i<32;++i){
-        for(int j=0;j<32;++j){
+    int k = 128;
+    bla::Matrix<double> m(k,k);
+    bla::Matrix<double> n(k,k);
+    for(int i=0;i<k;++i){
+        for(int j=0;j<k;++j){
             m(i,j) = i+j;
             n(i,j) = 2*i+j;
         }
@@ -100,7 +101,28 @@ int main()
     double time = std::chrono::duration<double, std::milli>(end-start).count();
     cout << "a(0,0) = " << a(0,0) << endl;
     cout <<" time = " << time 
-           << " ms, GFlops = " << (32*32*32)/time/1e6
+           << " ms, GFlops = " << (k*k*k)/time/1e6
+           << endl;
+    }
+
+    {
+    int k =128;
+    bla::Matrix<double> m(k,k);
+    bla::Matrix<double> n(k,k);
+    for(int i=0;i<k;++i){
+        for(int j=0;j<k;++j){
+            m(i,j) = 3*i+j;
+            n(i,j) = 4*i+j;
+        }
+    }
+    auto start = std::chrono::high_resolution_clock::now();
+    auto a = bla::compiledInnerProduct(m,n);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double time = std::chrono::duration<double, std::milli>(end-start).count();
+    cout << "a(0,0) = " << a(0,0) << endl;
+    cout <<" time = " << time 
+           << " ms, GFlops = " << (k*k*k)/time/1e6
            << endl;
     }
 }

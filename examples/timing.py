@@ -6,10 +6,10 @@ import sys
 
 from dhllinalg.bla import Matrix, ParallelComputing, NumThreads, InnerProduct
 
-s = 160
+s = 16
 numTestsPerS = 20
-maxS = 736
-incS = 32
+maxS = 496
+incS = 16
 
 file_name = "results.csv"
 if Path(file_name).is_file():
