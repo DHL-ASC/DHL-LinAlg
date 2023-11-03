@@ -20,7 +20,7 @@ setup(
     name="dhllinalg",
     version="0.1.1",
     author="DHL-Team",
-    license="LGPL2.1",
+    license="MIT",
     packages=["dhllinalg"],
     description="Basic Linear Algebra in C++ (TU Vienna - ASC)",
     long_description=long_description,  # Long description read from the the readme file
