@@ -7,6 +7,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 _cmake_args = ["-DCMAKE_BUILD_TYPE=Release"]
 
 if 'win32' in sys.platform:
+    include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("/arch:AVX" COMPILER_OPT_ARCH_AVX_SUPPORTED)
     if(COMPILER_OPT_ARCH_AVX_SUPPORTED)
       _cmake_args += ['/arch:AVX2']
