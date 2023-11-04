@@ -6,7 +6,8 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 _cmake_args = ["-DCMAKE_BUILD_TYPE=Release"]
 
-
+if('win32' in sys.platform):
+    _cmake_args += ['/arch:AVX2']
 
 
 
