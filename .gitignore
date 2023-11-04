@@ -7,6 +7,9 @@
 /.vscode/*
 .vscode/*
 
+# pyodide
+*.pyodide*
+*_output*
 
 # Compiled Object files
 **/.DS_Store

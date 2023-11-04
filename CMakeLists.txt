@@ -25,6 +25,12 @@ add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/t
 
 pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 
+
+if($ENV{PYODIDE})
+  target_include_directories(bla BEFORE PUBLIC $ENV{PYTHONINCLUDE} )
+  target_link_options(bla PUBLIC -sSIDE_MODULE=1)
+endif()
+
 # target_sources(bla PUBLIC external_dependencies/HPC/src/simd.h)
 # target_link_libraries(bla PRIVATE pybind11::module external_dependencies/HPC/src/timer.h external_dependencies/HPC/src/taskmanager.h external_dependencies/HPC/concurrentqueue/concurrentqueue.h)
 
