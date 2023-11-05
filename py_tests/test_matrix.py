@@ -31,6 +31,20 @@ def test_matrix_vector_multiplication(m3, v3):
     assert res[2] == pytest.approx(16, 1e-16)
 
 
+def test_matrix_matrix_multiplication():
+    m = Matrix(10, 5)
+    n = Matrix(5, 10)
+    for i in range(10):
+        for j in range(5):
+            m[i, j] = i + 2 * j
+            n[j, i] = 2 * i + 3 * j
+
+    numpy_m = np.asarray(m)
+    numpy_n = np.asarray(n)
+    assert np.array_equal(np.asarray(m * n), np.dot(numpy_m, numpy_n))
+    assert np.array_equal(np.asarray(n * m), np.dot(numpy_n, numpy_m))
+
+
 def test_matrix_set_get(m3):
     m3[1, 2] = 11
     m3[-1, 1] = 20
