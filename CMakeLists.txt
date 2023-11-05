@@ -3,9 +3,16 @@ project(ASC_bla)
 
 set (CMAKE_CXX_STANDARD 17)
 
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+else()
+  CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_OPT_ARCH_AVXTWO_SUPPORTED)
+  if(COMPILER_OPT_ARCH_AVXTWO_SUPPORTED)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+  endif()
+endif()
 
 include_directories(src external_dependencies/HPC/src external_dependencies/HPC/concurrentqueue)
 link_directories(src external_dependencies/HPC/src external_dependencies/HPC/concurrentqueue)
