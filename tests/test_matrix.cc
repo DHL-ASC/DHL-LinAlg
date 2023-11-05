@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include <iostream>
+#include <simd.h>
 
 using namespace std;
 
@@ -147,4 +148,8 @@ int main()
 
         cout << bla::InnerProduct(n,m) <<endl;
     }
+
+    ASC_HPC::test_simd_include();
+    ASC_HPC::test_avx_include();
+    return 0;
 }
