@@ -244,11 +244,6 @@ PYBIND11_MODULE(bla, m)
              {
                  return Matrix<double, RowMajor>(self * other);
              })
-        .def("__rmul__",
-             [](Matrix<double, RowMajor> &self, Matrix<double, RowMajor> &other)
-             {
-                 return Matrix<double, RowMajor>(self * other);
-             })
 
         // matrix vector multiplication
         .def("__mul__",

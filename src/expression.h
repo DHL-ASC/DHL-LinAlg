@@ -61,35 +61,35 @@ namespace bla
         double r = 0;
 
         ASC_HPC::SIMD<double, 16> res16(0.0);
-        for (;v1.Size()>15 && i < v1.Size()-15; i += 16)
+        for (; v1.Size() > 15 && i < v1.Size() - 15; i += 16)
         {
             ASC_HPC::SIMD<double, 16> s1(v1.Data() + i);
             ASC_HPC::SIMD<double, 16> s2(v2.Data() + i);
-            res16 = ASC_HPC::FMA(s1 , s2, res16);
+            res16 = ASC_HPC::FMA(s1, s2, res16);
         }
         r += ASC_HPC::HSum(res16);
 
         ASC_HPC::SIMD<double, 8> res8(0.0);
-        for (;v1.Size()>7 && i < v1.Size()-7; i += 8)
+        for (; v1.Size() > 7 && i < v1.Size() - 7; i += 8)
         {
             ASC_HPC::SIMD<double, 8> s1(v1.Data() + i);
             ASC_HPC::SIMD<double, 8> s2(v2.Data() + i);
-            res8 = ASC_HPC::FMA(s1 , s2, res8);
+            res8 = ASC_HPC::FMA(s1, s2, res8);
         }
         r += ASC_HPC::HSum(res8);
 
         ASC_HPC::SIMD<double, 4> res4(0.0);
-        for (;v1.Size()>3 && i < v1.Size()-3; i += 4)
+        for (; v1.Size() > 3 && i < v1.Size() - 3; i += 4)
         {
             ASC_HPC::SIMD<double, 4> s1(v1.Data() + i);
             ASC_HPC::SIMD<double, 4> s2(v2.Data() + i);
-            res4 = ASC_HPC::FMA(s1 , s2, res4);
+            res4 = ASC_HPC::FMA(s1, s2, res4);
         }
         r += ASC_HPC::HSum(res4);
 
         for (; i < v1.Size(); i++)
             r += v1(i) * v2(i);
-        
+
         return r;
     }
 
@@ -186,7 +186,23 @@ namespace bla
         MatMatExpr(TA m1, TB m2) : m1_(m1), m2_(m2) {}
         auto operator()(size_t i, size_t j) const
         {
-            return m1_.Row(i) * m2_.Col(j);
+            double r0 = 0;
+            double r1 = 0;
+            double r2 = 0;
+            double r3 = 0;
+            size_t k = 0;
+            for (; k < m2_.nRows() - 3; k += 4)
+            {
+                r0 += m1_(i, k) * m2_(k, j);
+                r1 += m1_(i, k + 1) * m2_(k + 1, j);
+                r2 += m1_(i, k + 2) * m2_(k + 2, j);
+                r3 += m1_(i, k + 3) * m2_(k + 3, j);
+            }
+            for (; k < m2_.nRows(); k++)
+                r0 += m1_(i, k) * m2_(k, j);
+
+            return r0 + r1 + r2 + r3;
+            // return m1_.Row(i) * m2_.Col(j);
         }
         size_t nRows() const { return m1_.nRows(); }
         size_t nCols() const { return m2_.nCols(); }
