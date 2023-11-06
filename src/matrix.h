@@ -9,7 +9,7 @@
 #include <simd.h>
 
 #include <taskmanager.h>
-//namespace py = pybind11;
+// namespace py = pybind11;
 
 namespace bla
 {
@@ -238,14 +238,18 @@ namespace bla
     Matrix<T, ORD> InnerProduct(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        size_t i = 0;
-        //std::cout << res.nCols() << std::endl;
-        for (; res.nRows()>1 && i < res.nRows() - 1; i += 2)
+        // std::cout << res.nCols() << std::endl;
+        ASC_HPC::TaskManager::RunParallel([&m1, &m2, &res](int id, int numThreads)
+                                          {
+
+       
+        size_t i = id;
+        for (; res.nRows() > 1 + 2 * (numThreads - 1) && i < res.nRows() - 1 - 2 * (numThreads - 1); i += 2 * numThreads)
         {
             size_t j = 0;
-            for (; res.nCols()>15 && j < res.nCols() - 15; j += 16)
+            for (; res.nCols() > 15  && j < res.nCols() - 15 ; j += 16)
             {
-                //std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< ", id: " << id << std::endl;
                 ASC_HPC::SIMD<double, 16> sum00(0.0);
                 ASC_HPC::SIMD<double, 16> sum10(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -257,9 +261,9 @@ namespace bla
                 sum00.Store(res.Data() + i * res.nCols() + j);
                 sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
             }
-            for (; res.nCols()>7 &&  j < res.nCols() - 7; j += 8)
+            for (; res.nCols() > 7 && j < res.nCols() - 7 ; j += 8)
             {
-                //std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
                 ASC_HPC::SIMD<double, 8> sum00(0.0);
                 ASC_HPC::SIMD<double, 8> sum10(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -271,9 +275,9 @@ namespace bla
                 sum00.Store(res.Data() + i * res.nCols() + j);
                 sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
             }
-            for (; res.nCols()>3 &&  j < res.nCols() - 3; j += 4)
+            for (; res.nCols() > 3  && j < res.nCols() - 3 ; j += 4)
             {
-                //std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
                 ASC_HPC::SIMD<double, 4> sum00(0.0);
                 ASC_HPC::SIMD<double, 4> sum10(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -301,7 +305,7 @@ namespace bla
             // }
             for (; j < res.nCols(); ++j)
             {
-                //std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
                 res(i, j) = 0;
                 res(i + 1, j) = 0;
                 for (size_t k = 0; k < m2.nRows(); k++)
@@ -311,12 +315,85 @@ namespace bla
                 }
             }
         }
-        for (; i < res.nRows(); ++i)
+        if (2*(id+1)  < res.nRows() - i)
         {
             size_t j = 0;
-            for (; res.nCols()>15 && j < res.nCols() - 15; j += 16)
+            for (; res.nCols() > 15  && j < res.nCols() - 15 ; j += 16)
             {
-                //std::cout<<"simd16, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< ", id: " << id << std::endl;
+                ASC_HPC::SIMD<double, 16> sum00(0.0);
+                ASC_HPC::SIMD<double, 16> sum10(0.0);
+                for (size_t k = 0; k < m2.nRows(); k++)
+                {
+                    ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
+                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i, k)), y1, sum00);
+                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i + 1, k)), y1, sum10);
+                }
+                sum00.Store(res.Data() + i * res.nCols() + j);
+                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
+            }
+            for (; res.nCols() > 7 && j < res.nCols() - 7 ; j += 8)
+            {
+                std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
+                ASC_HPC::SIMD<double, 8> sum00(0.0);
+                ASC_HPC::SIMD<double, 8> sum10(0.0);
+                for (size_t k = 0; k < m2.nRows(); k++)
+                {
+                    ASC_HPC::SIMD<double, 8> y1(m2.Data() + k * m2.nCols() + j);
+                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i, k)), y1, sum00);
+                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i + 1, k)), y1, sum10);
+                }
+                sum00.Store(res.Data() + i * res.nCols() + j);
+                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
+            }
+            for (; res.nCols() > 3  && j < res.nCols() - 3 ; j += 4)
+            {
+                std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
+                ASC_HPC::SIMD<double, 4> sum00(0.0);
+                ASC_HPC::SIMD<double, 4> sum10(0.0);
+                for (size_t k = 0; k < m2.nRows(); k++)
+                {
+                    ASC_HPC::SIMD<double, 4> y1(m2.Data() + k * m2.nCols() + j);
+                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y1, sum00);
+                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y1, sum10);
+                }
+                sum00.Store(res.Data() + i * res.nCols() + j);
+                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
+            }
+            // not working with avx as simd1 has no store
+            // for (; j < res.nCols() - 2; j += 2)
+            // {
+            //     ASC_HPC::SIMD<double, 2> sum00(0.0);
+            //     ASC_HPC::SIMD<double, 2> sum10(0.0);
+            //     for (size_t k = 0; k < m2.nRows(); k++)
+            //     {
+            //         ASC_HPC::SIMD<double, 2> y1(m2.Data() + k * m2.nCols() + j);
+            //         sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i, k)), y1, sum00);
+            //         sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i + 1, k)), y1, sum10);
+            //     }
+            //     sum00.Store(res.Data() + i * res.nCols() + j);
+            //     sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
+            // }
+            for (; j < res.nCols(); ++j)
+            {
+                std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
+                res(i, j) = 0;
+                res(i + 1, j) = 0;
+                for (size_t k = 0; k < m2.nRows(); k++)
+                {
+                    res(i, j) += m1(i, k) * m2(k, j);
+                    res(i + 1, j) += m1(i + 1, k) * m2(k, j);
+                }
+            }} });
+
+        if (res.nRows() % 2)
+        {
+            size_t i = res.nRows() - 1;
+            size_t id = 0;
+            size_t j = 0;
+            for (; res.nCols() > 15 && j < res.nCols() - 15; j += 16)
+            {
+                std::cout << "simd16, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
                 ASC_HPC::SIMD<double, 16> sum00(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
@@ -325,9 +402,9 @@ namespace bla
                 }
                 sum00.Store(res.Data() + i * res.nCols() + j);
             }
-            for (; res.nCols()>7 && j < res.nCols() - 7; j += 8)
+            for (; res.nCols() > 7 && j < res.nCols() - 7; j += 8)
             {
-                //std::cout<<"simd8, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout << "simd8, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
                 ASC_HPC::SIMD<double, 8> sum00(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
@@ -336,9 +413,9 @@ namespace bla
                 }
                 sum00.Store(res.Data() + i * res.nCols() + j);
             }
-            for (; res.nCols()>3 && j < res.nCols() - 3; j += 4)
+            for (; res.nCols() > 3 && j < res.nCols() - 3; j += 4)
             {
-                //std::cout<<"simd4, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout << "simd4, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
                 ASC_HPC::SIMD<double, 4> sum00(0.0);
                 for (size_t k = 0; k < m2.nRows(); k++)
                 {
@@ -347,20 +424,20 @@ namespace bla
                 }
                 sum00.Store(res.Data() + i * res.nCols() + j);
             }
-            //not working with avx as simd1 has no store
-            // for (; j < res.nCols() - 2; j += 2)
-            // {
-            //     ASC_HPC::SIMD<double, 2> sum00(0.0);
-            //     for (size_t k = 0; k < m2.nRows(); k++)
-            //     {
-            //         ASC_HPC::SIMD<double, 2> y1(m2.Data() + k * m2.nCols() + j);
-            //         sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i, k)), y1, sum00);
-            //     }
-            //     sum00.Store(res.Data() + i * res.nCols() + j);
-            // }
+            // not working with avx as simd1 has no store
+            //  for (; j < res.nCols() - 2; j += 2)
+            //  {
+            //      ASC_HPC::SIMD<double, 2> sum00(0.0);
+            //      for (size_t k = 0; k < m2.nRows(); k++)
+            //      {
+            //          ASC_HPC::SIMD<double, 2> y1(m2.Data() + k * m2.nCols() + j);
+            //          sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i, k)), y1, sum00);
+            //      }
+            //      sum00.Store(res.Data() + i * res.nCols() + j);
+            //  }
             for (; j < res.nCols(); ++j)
             {
-                //std::cout<<"simd0, (i,j)=" << i << ", " << j<< std::endl;
+                std::cout << "simd0, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
                 res(i, j) = 0;
                 for (size_t k = 0; k < m2.nRows(); k++)
                     res(i, j) += m1(i, k) * m2(k, j);
