@@ -35,3 +35,8 @@ jobs:
         # Pyodide is still in the process of adding better/easier support for
         # non-setup.py based builds.
         CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: pyodide-build
+        path: dist/
