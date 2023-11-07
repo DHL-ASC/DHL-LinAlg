@@ -8,7 +8,7 @@ import os
 from dhllinalg.bla import Matrix, ParallelComputing, NumThreads, InnerProduct
 
 s = 16
-numTestsPerS = 20
+numTestsPerS = 10
 maxS = 496
 incS = 16
 

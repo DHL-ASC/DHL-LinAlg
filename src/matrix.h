@@ -52,6 +52,7 @@ namespace bla
                     (*this)(i, j) = scal;
             return *this;
         }
+        size_t Dist() const {return dist_;}
         auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
         size_t nRows() const { return rows_; }
         size_t nCols() const { return cols_; }
@@ -520,44 +521,48 @@ namespace bla
         return (*dispatch_MatMatMult[wa])(m1, m2);
     }
 
+    template<size_t H, size_t W>
+    void MultMatMatKernel (size_t Aw,double *Ai,size_t Adist, double *Bj,size_t Bdist,double *Cij,size_t Cdist)
+    {
+        ASC_HPC::SIMD<double, 16> sum00(0.0);
+        ASC_HPC::SIMD<double, 16> sum10(0.0);
+        for (size_t k = 0; k < Aw; ++k)
+        {
+            ASC_HPC::SIMD<double, 16> y1(Bj + k * Bdist);
+            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(*(Ai+k)), y1, sum00);
+            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(*(Ai+k+Adist)), y1, sum10);
+        }
+        sum00 += ASC_HPC::SIMD<double, 16>(Cij);
+        sum10 += ASC_HPC::SIMD<double, 16>(Cij+Cdist);
+        sum00.Store(Cij);
+        sum10.Store(Cij+Cdist);
+    }
+
     void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
         constexpr size_t H = 2;
         constexpr size_t W = 16;
-        std::cout << A << std::endl;
-        std::cout << B << std::endl;
+        //std::cout << A << std::endl;
+        //std::cout << B << std::endl;
         for (size_t i = 0; i + H <= C.nRows(); i += H)
         {
             for (size_t j = 0; j + W <= C.nCols(); j += W)
             {
-                // std::cout << "inside multmatmat2, i:  " << i << std::endl;
-                // std::cout << "inside multmatmat2, j:  " << j << std::endl;
-                ASC_HPC::SIMD<double, 16> sum00(0.0);
-                ASC_HPC::SIMD<double, 16> sum10(0.0);
-                for (size_t k = 0; k < B.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 16> y1(B.Data() + k * B.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(A(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(A(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(C.Data() + i * C.nCols() + j);
-                sum10.Store(C.Data() + (i + 1) * C.nCols() + j);
+                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(),&B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
         }
-        // AddMatMatKernel<H, W>(A.Width(), &A(i, 0), A.Dist(),
-        //                       &B(0, j), B.dist(), &C(i, j), C.Dist());
         // leftover rows and cols
     }
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        constexpr size_t BH = 16;
-        constexpr size_t BW = 16;
+        constexpr size_t BH = 96;
+        constexpr size_t BW = 96;
         alignas(64) double memBA[BH * BW];
-        for (size_t i1 = 0; i1 + BH <= A.nRows(); i1 += BH)
+        for (size_t i1 = 0; i1 < A.nRows(); i1 += BH)
         {
             size_t j1 = 0;
-            for (; j1 + BW <= A.nCols(); j1 += BW)
+            for (; j1 < A.nCols(); j1 += BW)
             {
                 size_t i2 = std::min(A.nRows(), i1 + BH);
                 size_t j2 = std::min(A.nCols(), j1 + BW);
@@ -577,6 +582,7 @@ namespace bla
     Matrix<T, ORD> InnerProduct2(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
+        res=0;
         MultMatMat(m1, m2, res);
         return res;
     }
