@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 include_directories(src external_dependencies/HPC/src external_dependencies/HPC/concurrentqueue)
 link_directories(src external_dependencies/HPC/src external_dependencies/HPC/concurrentqueue)
 
-find_package(Python 3.8 COMPONENTS Interpreter Development REQUIRED)
+find_package(Python 3 COMPONENTS Interpreter Development.Module REQUIRED)
 
 execute_process(
   COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
