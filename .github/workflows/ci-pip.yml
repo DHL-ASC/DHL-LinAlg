@@ -5,15 +5,14 @@ on:
   pull_request:
 
 jobs:
-  build:
-    name: Build with Pip
-    runs-on: ${{ matrix.platform }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+  build-pyodide:
+    runs-on: ubuntu-latest
 
+    env:
+      PYODIDE_VERSION: 0.23.1
+      PYTHON_VERSION: 3.11.2
+      EMSCRIPTEN_VERSION: 3.1.32
+      NODE_VERSION: 18
     steps:
     - uses: actions/checkout@v4
       with:
@@ -21,20 +20,18 @@ jobs:
 
     - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Build and install
-      run: pip install --verbose .[test]
-
-    - name: Test
-      run: pytest -v
-
-  build-pyodide:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: jobovy/pyodide-buildpackage-action@v1
-    - uses: actions/upload-artifact@v2-preview
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - uses: mymindstorm/setup-emsdk@ab889da2abbcbb280f91ec4c215d3bb4f3a8f775 # v12
       with:
-        name: package-wheel-pyodide
-        path: wheelhouse/*.whl
+        version: ${{ env.EMSCRIPTEN_VERSION }}
+        actions-cache-folder: emsdk-cache
+
+    - name: Install pyodide-build
+      run: pip install pyodide-build==$PYODIDE_VERSION
+
+    - name: Build
+      run: |
+        # Pyodide is still in the process of adding better/easier support for
+        # non-setup.py based builds.
+        CFLAGS=-g2 LDFLAGS=-g2 pyodide build
