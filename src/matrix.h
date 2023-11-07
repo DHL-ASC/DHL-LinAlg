@@ -19,9 +19,9 @@ namespace bla
         RowMajor
     };
 
-    template <typename T, ORDERING ORD>
+    template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class MatrixView;
-    template <typename T, ORDERING ORD = ORDERING::RowMajor>
+    template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class Matrix;
     template <typename T, ORDERING ORD>
     class MatrixView : public MatExpr<MatrixView<T, ORD>>
@@ -518,6 +518,67 @@ namespace bla
     {
         size_t wa = m1.nCols() > 224 ? 14 : (m1.nCols() / 16 - 1);
         return (*dispatch_MatMatMult[wa])(m1, m2);
+    }
+
+    void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
+    {
+        constexpr size_t H = 2;
+        constexpr size_t W = 16;
+        std::cout << A << std::endl;
+        std::cout << B << std::endl;
+        for (size_t i = 0; i + H <= C.nRows(); i += H)
+        {
+            for (size_t j = 0; j + W <= C.nCols(); j += W)
+            {
+                // std::cout << "inside multmatmat2, i:  " << i << std::endl;
+                // std::cout << "inside multmatmat2, j:  " << j << std::endl;
+                ASC_HPC::SIMD<double, 16> sum00(0.0);
+                ASC_HPC::SIMD<double, 16> sum10(0.0);
+                for (size_t k = 0; k < B.nRows(); k++)
+                {
+                    ASC_HPC::SIMD<double, 16> y1(B.Data() + k * B.nCols() + j);
+                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(A(i, k)), y1, sum00);
+                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(A(i + 1, k)), y1, sum10);
+                }
+                sum00.Store(C.Data() + i * C.nCols() + j);
+                sum10.Store(C.Data() + (i + 1) * C.nCols() + j);
+            }
+        }
+        // AddMatMatKernel<H, W>(A.Width(), &A(i, 0), A.Dist(),
+        //                       &B(0, j), B.dist(), &C(i, j), C.Dist());
+        // leftover rows and cols
+    }
+
+    void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
+    {
+        constexpr size_t BH = 16;
+        constexpr size_t BW = 16;
+        alignas(64) double memBA[BH * BW];
+        for (size_t i1 = 0; i1 + BH <= A.nRows(); i1 += BH)
+        {
+            size_t j1 = 0;
+            for (; j1 + BW <= A.nCols(); j1 += BW)
+            {
+                size_t i2 = std::min(A.nRows(), i1 + BH);
+                size_t j2 = std::min(A.nCols(), j1 + BW);
+                // std::cout << "inside multmatmat, i1:  " << i1 << std::endl;
+                // std::cout << "inside multmatmat, j1:  " << j1 << std::endl;
+                // std::cout << "inside multmatmat, i2:  " << i2 << std::endl;
+                // std::cout << "inside multmatmat, j2:  " << j2 << std::endl;
+
+                MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
+                Ablock = A.Rows(i1, i2).Cols(j1, j2);
+                MultMatMat2(Ablock, B.Rows(j1, j2), C.Rows(i1, i2));
+            }
+        }
+    }
+
+    template <typename T, ORDERING ORD>
+    Matrix<T, ORD> InnerProduct2(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
+    {
+        Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
+        MultMatMat(m1, m2, res);
+        return res;
     }
 
 } // namespace bla
