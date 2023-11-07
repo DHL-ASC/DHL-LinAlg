@@ -52,7 +52,7 @@ namespace bla
                     (*this)(i, j) = scal;
             return *this;
         }
-        size_t Dist() const {return dist_;}
+        size_t Dist() const { return dist_; }
         auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
         size_t nRows() const { return rows_; }
         size_t nCols() const { return cols_; }
@@ -521,34 +521,42 @@ namespace bla
         return (*dispatch_MatMatMult[wa])(m1, m2);
     }
 
-    template<size_t H, size_t W>
-    void MultMatMatKernel (size_t Aw,double *Ai,size_t Adist, double *Bj,size_t Bdist,double *Cij,size_t Cdist)
+    template <size_t H, size_t W>
+    void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist)
     {
-        ASC_HPC::SIMD<double, 16> sum00(0.0);
-        ASC_HPC::SIMD<double, 16> sum10(0.0);
+        ASC_HPC::SIMD<double, 12> sum00(0.0);
+        ASC_HPC::SIMD<double, 12> sum10(0.0);
+        ASC_HPC::SIMD<double, 12> sum20(0.0);
+        ASC_HPC::SIMD<double, 12> sum30(0.0);
         for (size_t k = 0; k < Aw; ++k)
         {
-            ASC_HPC::SIMD<double, 16> y1(Bj + k * Bdist);
-            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(*(Ai+k)), y1, sum00);
-            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(*(Ai+k+Adist)), y1, sum10);
+            ASC_HPC::SIMD<double, 12> y1(Bj + k * Bdist);
+            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k)), y1, sum00);
+            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k + Adist)), y1, sum10);
+            sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k + 2 * Adist)), y1, sum20);
+            sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k + 3 * Adist)), y1, sum30);
         }
-        sum00 += ASC_HPC::SIMD<double, 16>(Cij);
-        sum10 += ASC_HPC::SIMD<double, 16>(Cij+Cdist);
+        sum00 += ASC_HPC::SIMD<double, 12>(Cij);
+        sum10 += ASC_HPC::SIMD<double, 12>(Cij + Cdist);
+        sum20 += ASC_HPC::SIMD<double, 12>(Cij + 2 * Cdist);
+        sum30 += ASC_HPC::SIMD<double, 12>(Cij + 3 * Cdist);
         sum00.Store(Cij);
-        sum10.Store(Cij+Cdist);
+        sum10.Store(Cij + Cdist);
+        sum20.Store(Cij + 2 * Cdist);
+        sum30.Store(Cij + 3 * Cdist);
     }
 
     void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        constexpr size_t H = 2;
-        constexpr size_t W = 16;
-        //std::cout << A << std::endl;
-        //std::cout << B << std::endl;
+        constexpr size_t H = 4;
+        constexpr size_t W = 12;
+        // std::cout << A << std::endl;
+        // std::cout << B << std::endl;
         for (size_t i = 0; i + H <= C.nRows(); i += H)
         {
             for (size_t j = 0; j + W <= C.nCols(); j += W)
             {
-                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(),&B(0, j), B.Dist(), &C(i, j), C.Dist());
+                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
         }
         // leftover rows and cols
@@ -582,7 +590,7 @@ namespace bla
     Matrix<T, ORD> InnerProduct2(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        res=0;
+        res = 0;
         MultMatMat(m1, m2, res);
         return res;
     }
