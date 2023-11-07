@@ -2,8 +2,6 @@ name: "Pip"
 
 on:
   push:
-    branches: 
-      - main
   pull_request:
 
 jobs:
@@ -30,3 +28,13 @@ jobs:
 
     - name: Test
       run: pytest -v
+
+  build-pyodide:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: jobovy/pyodide-buildpackage-action@v1
+    - uses: actions/upload-artifact@v2-preview
+      with:
+        name: package-wheel-pyodide
+        path: wheelhouse/*.whl
