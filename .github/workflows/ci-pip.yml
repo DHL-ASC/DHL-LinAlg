@@ -10,7 +10,7 @@ jobs:
 
     env:
       PYODIDE_VERSION: 0.24.1
-      PYTHON_VERSION: 3.11.2
+      PYTHON_VERSION: 3.11.3
       EMSCRIPTEN_VERSION: 3.1.45
       NODE_VERSION: 18
     steps:
