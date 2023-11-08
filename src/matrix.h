@@ -539,8 +539,8 @@ namespace bla
             sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + Adist)), y1, sum10);
             sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 2 * Adist)), y1, sum20);
             sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 3 * Adist)), y1, sum30);
-            sum40 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k+ 4 * Adist)), y1, sum00);
-            sum50 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 5* Adist)), y1, sum10);
+            sum40 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k+ 4 * Adist)), y1, sum40);
+            sum50 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 5* Adist)), y1, sum50);
             sum60 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 6 * Adist)), y1, sum60);
             sum70 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 7 * Adist)), y1, sum70);
         }
