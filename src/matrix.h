@@ -552,9 +552,39 @@ namespace bla
             {
                 MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
+            if(i+3 == C.nRows()){
+                MultMatMatKernel<3, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }else if(i+1 == C.nRows()){
+                MultMatMatKernel<1, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+        }
+        for (; j + 4 <= C.nCols(); j += 4)
+        {
+            size_t i = 0;
+            for (; i + H <= C.nRows(); i += H)
+            {
+                MultMatMatKernel<H, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+            if(i+3 == C.nRows()){
+                MultMatMatKernel<3, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }else if(i+1 == C.nRows()){
+                MultMatMatKernel<1, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+        }
+        for (; j < C.nCols(); ++j)
+        {
+            size_t i = 0;
+            for (; i + H <= C.nRows(); i += H)
+            {
+                MultMatMatKernel<H, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+            if(i+3 == C.nRows()){
+                MultMatMatKernel<3, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }else if(i+1 == C.nRows()){
+                MultMatMatKernel<1, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
         }
 
-        // leftover rows and cols
     }
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
