@@ -524,22 +524,22 @@ namespace bla
     template <size_t H, size_t W>
     void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist)
     {
-        ASC_HPC::SIMD<double, 12> sum00(0.0);
-        ASC_HPC::SIMD<double, 12> sum10(0.0);
-        ASC_HPC::SIMD<double, 12> sum20(0.0);
-        ASC_HPC::SIMD<double, 12> sum30(0.0);
+        ASC_HPC::SIMD<double, W> sum00(0.0);
+        ASC_HPC::SIMD<double, W> sum10(0.0);
+        ASC_HPC::SIMD<double, W> sum20(0.0);
+        ASC_HPC::SIMD<double, W> sum30(0.0);
         for (size_t k = 0; k < Aw; ++k)
         {
-            ASC_HPC::SIMD<double, 12> y1(Bj + k * Bdist);
-            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k)), y1, sum00);
-            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k + Adist)), y1, sum10);
-            sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k + 2 * Adist)), y1, sum20);
-            sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 12>(*(Ai + k + 3 * Adist)), y1, sum30);
+            ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
+            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k)), y1, sum00);
+            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + Adist)), y1, sum10);
+            sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 2 * Adist)), y1, sum20);
+            sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 3 * Adist)), y1, sum30);
         }
-        sum00 += ASC_HPC::SIMD<double, 12>(Cij);
-        sum10 += ASC_HPC::SIMD<double, 12>(Cij + Cdist);
-        sum20 += ASC_HPC::SIMD<double, 12>(Cij + 2 * Cdist);
-        sum30 += ASC_HPC::SIMD<double, 12>(Cij + 3 * Cdist);
+        sum00 += ASC_HPC::SIMD<double, W>(Cij);
+        sum10 += ASC_HPC::SIMD<double, W>(Cij + Cdist);
+        sum20 += ASC_HPC::SIMD<double, W>(Cij + 2 * Cdist);
+        sum30 += ASC_HPC::SIMD<double, W>(Cij + 3 * Cdist);
         sum00.Store(Cij);
         sum10.Store(Cij + Cdist);
         sum20.Store(Cij + 2 * Cdist);
@@ -552,9 +552,9 @@ namespace bla
         constexpr size_t W = 12;
         // std::cout << A << std::endl;
         // std::cout << B << std::endl;
-        for (size_t i = 0; i + H <= C.nRows(); i += H)
+        for (size_t j = 0; j + W <= C.nCols(); j += W)
         {
-            for (size_t j = 0; j + W <= C.nCols(); j += W)
+            for (size_t i = 0; i + H <= C.nRows(); i += H)
             {
                 MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
@@ -564,8 +564,8 @@ namespace bla
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        constexpr size_t BH = 96;
-        constexpr size_t BW = 96;
+        constexpr size_t BH = 144;
+        constexpr size_t BW = 144;
         alignas(64) double memBA[BH * BW];
         for (size_t i1 = 0; i1 < A.nRows(); i1 += BH)
         {
