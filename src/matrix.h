@@ -554,6 +554,8 @@ namespace bla
             }
             if(i+3 == C.nRows()){
                 MultMatMatKernel<3, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }else if(i+2 == C.nRows()){
+                MultMatMatKernel<2, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }else if(i+1 == C.nRows()){
                 MultMatMatKernel<1, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
@@ -567,6 +569,8 @@ namespace bla
             }
             if(i+3 == C.nRows()){
                 MultMatMatKernel<3, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }else if(i+2 == C.nRows()){
+                MultMatMatKernel<2, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }else if(i+1 == C.nRows()){
                 MultMatMatKernel<1, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
@@ -580,6 +584,8 @@ namespace bla
             }
             if(i+3 == C.nRows()){
                 MultMatMatKernel<3, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }else if(i+2 == C.nRows()){
+                MultMatMatKernel<2, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }else if(i+1 == C.nRows()){
                 MultMatMatKernel<1, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
