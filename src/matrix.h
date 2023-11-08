@@ -524,20 +524,42 @@ namespace bla
     template <size_t H, size_t W>
     void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist)
     {
-        ASC_HPC::SIMD<double, W> sum[H];
-        for(size_t l =0;l<H;++l)
-            sum[l] = ASC_HPC::SIMD<double, W>(0.0);
+        ASC_HPC::SIMD<double, W> sum00(0.0);
+        ASC_HPC::SIMD<double, W> sum10(0.0);
+        ASC_HPC::SIMD<double, W> sum20(0.0);
+        ASC_HPC::SIMD<double, W> sum30(0.0);
+        ASC_HPC::SIMD<double, W> sum40(0.0);
+        ASC_HPC::SIMD<double, W> sum50(0.0);
+        ASC_HPC::SIMD<double, W> sum60(0.0);
+        ASC_HPC::SIMD<double, W> sum70(0.0);
         for (size_t k = 0; k < Aw; ++k)
         {
             ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
-
-            for(size_t l =0;l<H;++l)
-                sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k +l * Adist)), y1, sum[l]);
+            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k)), y1, sum00);
+            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + Adist)), y1, sum10);
+            sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 2 * Adist)), y1, sum20);
+            sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 3 * Adist)), y1, sum30);
+            sum40 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k+ 4 * Adist)), y1, sum00);
+            sum50 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 5* Adist)), y1, sum10);
+            sum60 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 6 * Adist)), y1, sum60);
+            sum70 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 7 * Adist)), y1, sum70);
         }
-        for(size_t l =0;l<H;++l){
-                sum[l] += ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
-            sum[l].Store(Cij + l*Cdist);
-        }
+        sum00 += ASC_HPC::SIMD<double, W>(Cij);
+        sum10 += ASC_HPC::SIMD<double, W>(Cij + Cdist);
+        sum20 += ASC_HPC::SIMD<double, W>(Cij + 2 * Cdist);
+        sum30 += ASC_HPC::SIMD<double, W>(Cij + 3 * Cdist);
+        sum40 += ASC_HPC::SIMD<double, W>(Cij + 4*Cdist);
+        sum50 += ASC_HPC::SIMD<double, W>(Cij + 5 * Cdist);
+        sum60 += ASC_HPC::SIMD<double, W>(Cij + 6 * Cdist);
+        sum70 += ASC_HPC::SIMD<double, W>(Cij + 7 * Cdist);
+        sum00.Store(Cij);
+        sum10.Store(Cij + Cdist);
+        sum20.Store(Cij + 2 * Cdist);
+        sum30.Store(Cij + 3 * Cdist);
+        sum40.Store(Cij + 4 * Cdist);
+        sum50.Store(Cij + 5 * Cdist);
+        sum60.Store(Cij + 6 * Cdist);
+        sum70.Store(Cij + 7 * Cdist);
     }
 
     void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
@@ -552,39 +574,9 @@ namespace bla
             {
                 MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
-            for (; i + 4 <= C.nRows(); i += 4)
-            {
-                MultMatMatKernel<4, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-            for (; i < C.nRows(); ++i)
-            {
-                MultMatMatKernel<1, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
         }
-        for (; j + 4 <= C.nCols(); j += 4)
-        {
-            size_t i = 0;
-            for (; i + H <= C.nRows(); i += H)
-            {
-                MultMatMatKernel<H, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-            for (; i + 4 <= C.nRows(); i += 4)
-            {
-                MultMatMatKernel<4, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-            for (; i < C.nRows(); ++i)
-            {
-                MultMatMatKernel<1, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-        }
-        for (; j < C.nCols(); ++j)
-        {
-            size_t i = 0;
-            for (; i < C.nRows(); ++i)
-            {
-                MultMatMatKernel<1,1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-        }
+
+        // leftover rows and cols
     }
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
