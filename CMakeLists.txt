@@ -26,9 +26,6 @@ target_link_libraries (test_lapack PUBLIC ${LAPACK_LIBRARIES})
 
 pybind11_add_module(bla src/bind_bla.cpp external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc)
 
-install (TARGETS bla DESTINATION ASCsoft)
-install (FILES src/vector.h DESTINATION ASCsoft/include)
-
 # target_link_libraries(bla PRIVATE pybind11::module external_dependencies/HPC/src/timer.h external_dependencies/HPC/src/taskmanager.h external_dependencies/HPC/concurrentqueue/concurrentqueue.h)
 
 install (TARGETS bla DESTINATION dhllinalg)
