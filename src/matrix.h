@@ -35,12 +35,11 @@ namespace bla
         template <typename TB>
         MatrixView &operator=(const MatExpr<TB> &m2)
         {
-            ASC_HPC::TaskManager::RunParallel([this, &m2] (int id, int numThreads)
-            {
+            ASC_HPC::TaskManager::RunParallel([this, &m2](int id, int numThreads)
+                                              {
                 for (size_t i = id; i < this->rows_; i+=numThreads)
                     for (size_t j = 0; j < this->cols_; j++)
-                        (*this)(i, j) = m2(i, j);
-            });
+                        (*this)(i, j) = m2(i, j); });
             return *this;
         }
 
@@ -54,6 +53,7 @@ namespace bla
         auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
         size_t nRows() const { return rows_; }
         size_t nCols() const { return cols_; }
+        size_t Dist() const { return dist_; }
         T *Data() { return data_; }
         const T *Data() const { return data_; }
         T &operator()(size_t i) { return data_[i]; }
@@ -218,6 +218,15 @@ namespace bla
             return *this;
         }
     };
+
+    template <typename T, ORDERING ORD>
+    auto Transpose(MatrixView<T, ORD> &m)
+    {
+        if constexpr (ORD == RowMajor)
+            return MatrixView<T, ColMajor>(m.nCols(), m.nRows(), m.nCols(), m.Data());
+        else
+            return MatrixView<T, RowMajor>(m.nCols(), m.nRows(), m.nRows(), m.Data());
+    }
 
     template <typename... Args>
     std::ostream &operator<<(std::ostream &ost, const MatrixView<Args...> &m)
