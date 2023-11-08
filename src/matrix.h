@@ -524,48 +524,73 @@ namespace bla
     template <size_t H, size_t W>
     void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist)
     {
-        ASC_HPC::SIMD<double, W> sum00(0.0);
-        ASC_HPC::SIMD<double, W> sum10(0.0);
-        ASC_HPC::SIMD<double, W> sum20(0.0);
-        ASC_HPC::SIMD<double, W> sum30(0.0);
+        ASC_HPC::SIMD<double, W> sum[H];
+        for(size_t l =0;l<H;++l)
+            sum[l] = ASC_HPC::SIMD<double, W>(0.0);
         for (size_t k = 0; k < Aw; ++k)
         {
             ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
-            sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k)), y1, sum00);
-            sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + Adist)), y1, sum10);
-            sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 2 * Adist)), y1, sum20);
-            sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + 3 * Adist)), y1, sum30);
+
+            for(size_t l =0;l<H;++l)
+                sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k +l * Adist)), y1, sum[l]);
         }
-        sum00 += ASC_HPC::SIMD<double, W>(Cij);
-        sum10 += ASC_HPC::SIMD<double, W>(Cij + Cdist);
-        sum20 += ASC_HPC::SIMD<double, W>(Cij + 2 * Cdist);
-        sum30 += ASC_HPC::SIMD<double, W>(Cij + 3 * Cdist);
-        sum00.Store(Cij);
-        sum10.Store(Cij + Cdist);
-        sum20.Store(Cij + 2 * Cdist);
-        sum30.Store(Cij + 3 * Cdist);
+        for(size_t l =0;l<H;++l){
+                sum[l] += ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
+            sum[l].Store(Cij + l*Cdist);
+        }
     }
 
     void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        constexpr size_t H = 4;
-        constexpr size_t W = 12;
-        // std::cout << A << std::endl;
-        // std::cout << B << std::endl;
-        for (size_t j = 0; j + W <= C.nCols(); j += W)
+        constexpr size_t H = 8;
+        constexpr size_t W = 8;
+        size_t j = 0;
+        for (; j + W <= C.nCols(); j += W)
         {
-            for (size_t i = 0; i + H <= C.nRows(); i += H)
+            size_t i = 0;
+            for (; i + H <= C.nRows(); i += H)
             {
                 MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
+            for (; i + 4 <= C.nRows(); i += 4)
+            {
+                MultMatMatKernel<4, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+            for (; i < C.nRows(); ++i)
+            {
+                MultMatMatKernel<1, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
         }
-        // leftover rows and cols
+        for (; j + 4 <= C.nCols(); j += 4)
+        {
+            size_t i = 0;
+            for (; i + H <= C.nRows(); i += H)
+            {
+                MultMatMatKernel<H, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+            for (; i + 4 <= C.nRows(); i += 4)
+            {
+                MultMatMatKernel<4, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+            for (; i < C.nRows(); ++i)
+            {
+                MultMatMatKernel<1, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+        }
+        for (; j < C.nCols(); ++j)
+        {
+            size_t i = 0;
+            for (; i < C.nRows(); ++i)
+            {
+                MultMatMatKernel<1,1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+        }
     }
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
         constexpr size_t BH = 144;
-        constexpr size_t BW = 144;
+        constexpr size_t BW = 144;//168//144//96
         alignas(64) double memBA[BH * BW];
         for (size_t i1 = 0; i1 < A.nRows(); i1 += BH)
         {
@@ -574,10 +599,6 @@ namespace bla
             {
                 size_t i2 = std::min(A.nRows(), i1 + BH);
                 size_t j2 = std::min(A.nCols(), j1 + BW);
-                // std::cout << "inside multmatmat, i1:  " << i1 << std::endl;
-                // std::cout << "inside multmatmat, j1:  " << j1 << std::endl;
-                // std::cout << "inside multmatmat, i2:  " << i2 << std::endl;
-                // std::cout << "inside multmatmat, j2:  " << j2 << std::endl;
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
