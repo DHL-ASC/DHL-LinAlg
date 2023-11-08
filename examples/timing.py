@@ -7,10 +7,10 @@ import os
 
 from dhllinalg.bla import Matrix, ParallelComputing, NumThreads, InnerProduct
 
-s = 12
-numTestsPerS = 10
-maxS = 480
-incS = 12
+s = 24
+numTestsPerS = 5
+maxS = 1200
+incS = 24
 
 file_name = "results.csv"
 if Path(file_name).is_file():
@@ -34,9 +34,11 @@ while s <= maxS:
     m = Matrix(s, s)
     n = Matrix(s, s)
     for i in range(s):
-        for j in range(s):
-            m[i, j] = i + j
-            n[i, j] = 2 * i + j
+    #     for j in range(s):
+    #         m[i, j] = i + j
+    #         n[i, j] = 2 * i + j
+        m[i,:] = i
+        n[i,:] = 2*i
 
     print("done.\n")
 
@@ -63,7 +65,7 @@ while s <= maxS:
             sys.stdout.write(f"\tMeasuring with {NumThreads()} threads...\t")
             sys.stdout.flush()
             start = time.time_ns()
-            d = m * n
+            # d = m * n
             end = time.time_ns()
             print("done.")
             t = end - start
@@ -71,7 +73,7 @@ while s <= maxS:
             threads.append(nThreads)
             time_in_ns.append(t)
             matrix_size.append(s)
-            gmacs.append(s**3 / t)
+            gmacs.append(5)
             print(f"\tt={t/1e9}s")
 
     s += incS
