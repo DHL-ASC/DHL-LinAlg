@@ -66,7 +66,7 @@ matrix_sizes = [
     ((47, 13), (13, 47)),  # Test with 47x13 and 13x47 matrices
     ((128, 7), (7, 128)),  # Test with 128x7 and 7x128 matrices
     ((9, 83), (83, 9)),  # Test with 9x83 and 83x9 matrices
-    ((512, 1024), (1024, 512)),  # Test with 9x83 and 83x9 matrices
+    ((512, 1024), (1024, 512)),  # Test with 512x1024 and 1024x512 matrices
 ]
 methods = ["normal", "InnerProduct"]
 matrix_size_and_methods = [
