@@ -58,31 +58,32 @@ namespace bla
     auto operator*(const VecExpr<TA> &v1, const VecExpr<TB> &v2)
     {
         size_t i = 0;
-        double r = 0;
+        typedef decltype(v1(0) * v2(0)) Tres;
+        Tres r = 0;
 
-        ASC_HPC::SIMD<double, 16> res16(0.0);
+        ASC_HPC::SIMD<Tres, 16> res16(0.0);
         for (; v1.Size() > 15 && i < v1.Size() - 15; i += 16)
         {
-            ASC_HPC::SIMD<double, 16> s1(v1.Data() + i);
-            ASC_HPC::SIMD<double, 16> s2(v2.Data() + i);
+            ASC_HPC::SIMD<Tres, 16> s1(v1.Data() + i);
+            ASC_HPC::SIMD<Tres, 16> s2(v2.Data() + i);
             res16 = ASC_HPC::FMA(s1, s2, res16);
         }
         r += ASC_HPC::HSum(res16);
 
-        ASC_HPC::SIMD<double, 8> res8(0.0);
+        ASC_HPC::SIMD<Tres, 8> res8(0.0);
         for (; v1.Size() > 7 && i < v1.Size() - 7; i += 8)
         {
-            ASC_HPC::SIMD<double, 8> s1(v1.Data() + i);
-            ASC_HPC::SIMD<double, 8> s2(v2.Data() + i);
+            ASC_HPC::SIMD<Tres, 8> s1(v1.Data() + i);
+            ASC_HPC::SIMD<Tres, 8> s2(v2.Data() + i);
             res8 = ASC_HPC::FMA(s1, s2, res8);
         }
         r += ASC_HPC::HSum(res8);
 
-        ASC_HPC::SIMD<double, 4> res4(0.0);
+        ASC_HPC::SIMD<Tres, 4> res4(0.0);
         for (; v1.Size() > 3 && i < v1.Size() - 3; i += 4)
         {
-            ASC_HPC::SIMD<double, 4> s1(v1.Data() + i);
-            ASC_HPC::SIMD<double, 4> s2(v2.Data() + i);
+            ASC_HPC::SIMD<Tres, 4> s1(v1.Data() + i);
+            ASC_HPC::SIMD<Tres, 4> s2(v2.Data() + i);
             res4 = ASC_HPC::FMA(s1, s2, res4);
         }
         r += ASC_HPC::HSum(res4);
@@ -186,10 +187,11 @@ namespace bla
         MatMatExpr(TA m1, TB m2) : m1_(m1), m2_(m2) {}
         auto operator()(size_t i, size_t j) const
         {
-            double r0 = 0;
-            double r1 = 0;
-            double r2 = 0;
-            double r3 = 0;
+            typedef decltype(m1_(0, 0) * m2_(0, 0)) Tres;
+            Tres r0 = 0;
+            Tres r1 = 0;
+            Tres r2 = 0;
+            Tres r3 = 0;
             size_t k = 0;
             for (; k < m2_.nRows() - 3; k += 4)
             {
