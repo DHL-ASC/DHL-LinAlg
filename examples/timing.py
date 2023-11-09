@@ -34,11 +34,11 @@ while s <= maxS:
     m = Matrix(s, s)
     n = Matrix(s, s)
     for i in range(s):
-    #     for j in range(s):
-    #         m[i, j] = i + j
-    #         n[i, j] = 2 * i + j
-        m[i,:] = i
-        n[i,:] = 2*i
+        #     for j in range(s):
+        #         m[i, j] = i + j
+        #         n[i, j] = 2 * i + j
+        m[i, :] = i
+        n[i, :] = 2 * i
 
     print("done.\n")
 
@@ -54,7 +54,7 @@ while s <= maxS:
         print("done.")
         t = end - start
         iterations.append(i)
-        threads.append(nThreads)
+        threads.append("c" + str(nThreads))
         time_in_ns.append(t)
         matrix_size.append(s)
         gmacs.append(s**3 / t)
@@ -70,7 +70,7 @@ while s <= maxS:
             print("done.")
             t = end - start
             iterations.append(i)
-            threads.append(nThreads)
+            threads.append("c" + str(nThreads))
             time_in_ns.append(t)
             matrix_size.append(s)
             gmacs.append(5)
