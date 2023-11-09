@@ -4,6 +4,7 @@
 #include "vector.h"
 #include "matrix.h"
 #include "taskmanager.h"
+#include "lapack_interface.h"
 
 using namespace bla;
 namespace py = pybind11;
@@ -42,6 +43,13 @@ PYBIND11_MODULE(bla, m)
 {
     m.doc() = "Basic linear algebra module"; // optional module docstring
     m.def("NumThreads", &ParallelComputing::getNumThreads, "Get number of threads used");
+    m.def("GEMM", [](Matrix<double, RowMajor> &a,
+                          Matrix<double, RowMajor> &b,
+                          Matrix<double, RowMajor> &c)
+             {
+                MultMatMatLapack(a,b,c);
+                return 0;
+             }, "Lapack MatMatMult");
 
     py::class_<ParallelComputing>(m, "ParallelComputing")
         .def(py::init<>())
