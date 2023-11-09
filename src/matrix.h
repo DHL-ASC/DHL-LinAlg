@@ -23,6 +23,16 @@ namespace bla
     class MatrixView;
     template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class Matrix;
+
+    template <size_t H, size_t W,short init = 0>
+    inline void SmallestMultMatMat(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t, size_t) noexcept;
+
+    template <size_t H, size_t W,short init = 0>
+    inline void MultMatMatKernel(size_t, double*, size_t, double*, size_t, double*, size_t) noexcept;
+
+    template<size_t H, size_t W, short init=0>
+    void MultMatMat2(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t);
+    
     template <typename T, ORDERING ORD>
     class MatrixView : public MatExpr<MatrixView<T, ORD>>
     {
@@ -235,318 +245,20 @@ namespace bla
         return ost;
     }
 
-    template <typename T, ORDERING ORD>
-    Matrix<T, ORD> InnerProduct(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
-    {
-        Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        // std::cout << res.nCols() << std::endl;
-        ASC_HPC::TaskManager::RunParallel([&m1, &m2, &res](int id, int numThreads)
-                                          {
 
-       
-        size_t i = 2*id;
-        for (; res.nRows() > 1 + 2 * (numThreads - 1) && i < res.nRows() - 1 ; i += 2 * numThreads)
-        {
-            // std::cout << "inside for loop if" << std::endl;
-            size_t j = 0;
-            for (; res.nCols() > 15  && j < res.nCols() - 15 ; j += 16)
-            {
-                // std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< ", id: " << id << std::endl;
-                ASC_HPC::SIMD<double, 16> sum00(0.0);
-                ASC_HPC::SIMD<double, 16> sum10(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            }
-            for (; res.nCols() > 7 && j < res.nCols() - 7 ; j += 8)
-            {
-                // std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
-                ASC_HPC::SIMD<double, 8> sum00(0.0);
-                ASC_HPC::SIMD<double, 8> sum10(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 8> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            }
-            for (; res.nCols() > 3  && j < res.nCols() - 3 ; j += 4)
-            {
-                // std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
-                ASC_HPC::SIMD<double, 4> sum00(0.0);
-                ASC_HPC::SIMD<double, 4> sum10(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 4> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            }
-            // not working with avx as simd1 has no store
-            // for (; j < res.nCols() - 2; j += 2)
-            // {
-            //     ASC_HPC::SIMD<double, 2> sum00(0.0);
-            //     ASC_HPC::SIMD<double, 2> sum10(0.0);
-            //     for (size_t k = 0; k < m2.nRows(); k++)
-            //     {
-            //         ASC_HPC::SIMD<double, 2> y1(m2.Data() + k * m2.nCols() + j);
-            //         sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i, k)), y1, sum00);
-            //         sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i + 1, k)), y1, sum10);
-            //     }
-            //     sum00.Store(res.Data() + i * res.nCols() + j);
-            //     sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            // }
-            for (; j < res.nCols(); ++j)
-            {
-                // std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
-                res(i, j) = 0;
-                res(i + 1, j) = 0;
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    res(i, j) += m1(i, k) * m2(k, j);
-                    res(i + 1, j) += m1(i + 1, k) * m2(k, j);
-                }
-            }
-        }
-        if (i+2  < res.nRows())
-        {
-            // std::cout << "inside first if" << std::endl;
-            size_t j = 0;
-            for (; res.nCols() > 15  && j < res.nCols() - 15 ; j += 16)
-            {
-                // std::cout<<"2x simd16, (i,j)=" << i << ", " << j<< ", id: " << id << std::endl;
-                ASC_HPC::SIMD<double, 16> sum00(0.0);
-                ASC_HPC::SIMD<double, 16> sum10(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            }
-            for (; res.nCols() > 7 && j < res.nCols() - 7 ; j += 8)
-            {
-                // std::cout<<"2x simd8, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
-                ASC_HPC::SIMD<double, 8> sum00(0.0);
-                ASC_HPC::SIMD<double, 8> sum10(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 8> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            }
-            for (; res.nCols() > 3  && j < res.nCols() - 3 ; j += 4)
-            {
-                // std::cout<<"2x simd4, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
-                ASC_HPC::SIMD<double, 4> sum00(0.0);
-                ASC_HPC::SIMD<double, 4> sum10(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 4> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y1, sum00);
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i + 1, k)), y1, sum10);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-                sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            }
-            // not working with avx as simd1 has no store
-            // for (; j < res.nCols() - 2; j += 2)
-            // {
-            //     ASC_HPC::SIMD<double, 2> sum00(0.0);
-            //     ASC_HPC::SIMD<double, 2> sum10(0.0);
-            //     for (size_t k = 0; k < m2.nRows(); k++)
-            //     {
-            //         ASC_HPC::SIMD<double, 2> y1(m2.Data() + k * m2.nCols() + j);
-            //         sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i, k)), y1, sum00);
-            //         sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i + 1, k)), y1, sum10);
-            //     }
-            //     sum00.Store(res.Data() + i * res.nCols() + j);
-            //     sum10.Store(res.Data() + (i + 1) * res.nCols() + j);
-            // }
-            for (; j < res.nCols(); ++j)
-            {
-                // std::cout<<"2x simd0, (i,j)=" << i << ", " << j<< ", id: " << id<< std::endl;
-                res(i, j) = 0;
-                res(i + 1, j) = 0;
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    res(i, j) += m1(i, k) * m2(k, j);
-                    res(i + 1, j) += m1(i + 1, k) * m2(k, j);
-                }
-            }} });
-
-        if (res.nRows() % 2)
-        {
-            // std::cout << "inside last if" << std::endl;
-            size_t i = res.nRows() - 1;
-            size_t id = 0;
-            size_t j = 0;
-            for (; res.nCols() > 15 && j < res.nCols() - 15; j += 16)
-            {
-                // std::cout << "simd16, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
-                ASC_HPC::SIMD<double, 16> sum00(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i, k)), y1, sum00);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-            }
-            for (; res.nCols() > 7 && j < res.nCols() - 7; j += 8)
-            {
-                // std::cout << "simd8, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
-                ASC_HPC::SIMD<double, 8> sum00(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 8> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 8>(m1(i, k)), y1, sum00);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-            }
-            for (; res.nCols() > 3 && j < res.nCols() - 3; j += 4)
-            {
-                // std::cout << "simd4, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
-                ASC_HPC::SIMD<double, 4> sum00(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 4> y1(m2.Data() + k * m2.nCols() + j);
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 4>(m1(i, k)), y1, sum00);
-                }
-                sum00.Store(res.Data() + i * res.nCols() + j);
-            }
-            // not working with avx as simd1 has no store
-            //  for (; j < res.nCols() - 2; j += 2)
-            //  {
-            //      ASC_HPC::SIMD<double, 2> sum00(0.0);
-            //      for (size_t k = 0; k < m2.nRows(); k++)
-            //      {
-            //          ASC_HPC::SIMD<double, 2> y1(m2.Data() + k * m2.nCols() + j);
-            //          sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 2>(m1(i, k)), y1, sum00);
-            //      }
-            //      sum00.Store(res.Data() + i * res.nCols() + j);
-            //  }
-            for (; j < res.nCols(); ++j)
-            {
-                // std::cout << "simd0, (i,j)=" << i << ", " << j << ", id: " << id << std::endl;
-                res(i, j) = 0;
-                for (size_t k = 0; k < m2.nRows(); k++)
-                    res(i, j) += m1(i, k) * m2(k, j);
-            }
-        }
-        return res;
-    }
-
-    template <size_t SIZE>
-    Matrix<double, RowMajor> smallInnerProduct(const MatrixView<double, RowMajor> &m1, const MatrixView<double, RowMajor> &m2)
-    {
-        Matrix<double, RowMajor> res(SIZE, SIZE);
-        size_t i = 0;
-        for (; i < SIZE - 1; i += 2)
-        {
-            for (size_t j = 0; j < SIZE - 15; j += 16)
-            {
-                ASC_HPC::SIMD<double, 16> sum00(0.0);
-                ASC_HPC::SIMD<double, 16> sum10(0.0);
-                // ASC_HPC::SIMD<double, 16> sum20(0.0);
-                // ASC_HPC::SIMD<double, 16> sum30(0.0);
-                for (size_t k = 0; k < m2.nRows(); k++)
-                {
-                    ASC_HPC::SIMD<double, 16> y1(m2.Data() + k * m2.nCols() + j);
-
-                    sum00 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i, k)), y1, sum00);
-
-                    sum10 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i + 1, k)), y1, sum10);
-
-                    // sum20 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+2, k)), y1, sum20);
-
-                    // sum30 = ASC_HPC::FMA(ASC_HPC::SIMD<double, 16>(m1(i+3, k)), y1, sum30);
-                }
-
-                sum00.Store(res.Data() + i * SIZE + j);
-
-                sum10.Store(res.Data() + (i + 1) * SIZE + j);
-
-                // sum20.Store(res.Data() + (i+2) * SIZE + j);
-
-                // sum30.Store(res.Data() + (i+3) * SIZE + j);
-            }
-        }
-
-        return res;
-    }
-
-    void (*name)(int arg1, int arg2);
-
-    // compile inner product for small matrix sizes as template
-    Matrix<double, RowMajor> (*dispatch_MatMatMult[15])(const MatrixView<double, RowMajor> &, const MatrixView<double, RowMajor> &);
-    auto init_MatMatMult = []()
-    {
-        dispatch_MatMatMult[0] = &smallInnerProduct<16>;
-        dispatch_MatMatMult[1] = &smallInnerProduct<32>;
-        dispatch_MatMatMult[2] = &smallInnerProduct<48>;
-        dispatch_MatMatMult[3] = &smallInnerProduct<64>;
-        dispatch_MatMatMult[4] = &smallInnerProduct<80>;
-        dispatch_MatMatMult[5] = &smallInnerProduct<96>;
-        dispatch_MatMatMult[6] = &smallInnerProduct<112>;
-        dispatch_MatMatMult[7] = &smallInnerProduct<128>;
-        dispatch_MatMatMult[8] = &smallInnerProduct<144>;
-        dispatch_MatMatMult[9] = &smallInnerProduct<160>;
-        dispatch_MatMatMult[10] = &smallInnerProduct<176>;
-        dispatch_MatMatMult[11] = &smallInnerProduct<192>;
-        dispatch_MatMatMult[12] = &smallInnerProduct<208>;
-        dispatch_MatMatMult[13] = &smallInnerProduct<224>;
-        // Iterate<std::size(dispatch_multAB)-1> ([&] (auto i)
-        // { dispatch_multAB[i] = &MultMatMat_intern; });
-        dispatch_MatMatMult[14] = &InnerProduct<double, RowMajor>;
-        return 1;
-    }();
-
-    Matrix<double, RowMajor> compiledInnerProduct(const MatrixView<double, RowMajor> &m1, const MatrixView<double, RowMajor> &m2)
-    {
-        size_t wa = m1.nCols() > 224 ? 14 : (m1.nCols() / 16 - 1);
-        return (*dispatch_MatMatMult[wa])(m1, m2);
-    }
-
-
-    template <size_t H, size_t W>
-    inline void SmallestMultMatMatKernel(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t, size_t);
-
-    template <size_t H, size_t W>
-    void MultMatMatKernel(size_t, double*, size_t, double*, size_t, double*, size_t);
-
-//error: partial specialization not allowed
-    // template <size_t W>
-    // inline void SmallestMultMatMatKernel<1,W>(size_t, double, size_t, double, size_t, double, size_t, size_t);
-
-    // template<size_t H>
-    // inline void MultMatMat2<H,1>(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t);
-
-    template <size_t H, size_t W>
-    inline void SmallestMultMatMatKernel(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t i, size_t j){
+    template <size_t H, size_t W, short init>
+    inline void SmallestMultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t i, size_t j) noexcept{
         for(;i+H<=C.nRows(); i+=H){
                 MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
         }
-        if constexpr (H!=1)
-            SmallestMultMatMatKernel<H-1,W>(A,B,C,i,j);
+        if constexpr (H!=1){
+            if(i!=C.nRows())
+                SmallestMultMatMat<H-1,W>(A,B,C,i,j);
+        }
     }
 
-    template <size_t H, size_t W>
-    void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist)
-    {
+    template <size_t H, size_t W, short init>
+    inline void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist) noexcept {
         ASC_HPC::SIMD<double, W> sum[H];
         for(size_t l =0;l<H;++l)
             sum[l] = ASC_HPC::SIMD<double, W>(0.0);
@@ -563,27 +275,24 @@ namespace bla
         }
     }
 
-    template<size_t H, size_t W>
-    inline void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t j)
-    {
+    template<size_t H, size_t W, short init>
+    void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t j) {
         for (; j + W <= C.nCols(); j += W)
         {
             size_t i = 0;
             for (; i + H <= C.nRows(); i += H){
-                // if(!i){
-                //     InitMultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-                // }else{
-                    MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-                // }
+                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
-            SmallestMultMatMatKernel<4, W>(A,B,C,i,j);
+            if(i!=C.nRows())
+                SmallestMultMatMat<3, W>(A,B,C,i,j);
         }
-        if constexpr (W!=1)
-            MultMatMat2<H,W-1>(A, B, C, j);
+        if constexpr (W!=1){
+            if(j!=C.nCols())
+                MultMatMat2<H,W/2>(A, B, C, j);
+        }
     }
 
-    void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
-    {
+    void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C){
         constexpr size_t BH = 144;
         constexpr size_t BW = 144;//168//144//96
         alignas(64) double memBA[BH * BW];
@@ -597,14 +306,13 @@ namespace bla
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
-                size_t j=0;
-                MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),j);
+                MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),0);
             }
         }
     }
 
     template <typename T, ORDERING ORD>
-    Matrix<T, ORD> InnerProduct2(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
+    Matrix<T, ORD> InnerProduct(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
         res = 0;
