@@ -249,11 +249,11 @@ namespace bla
     template <size_t H, size_t W, short init>
     inline void SmallestMultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t i, size_t j) noexcept{
         for(;i+H<=C.nRows(); i+=H){
-                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                MultMatMatKernel<H, W, init>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
         }
         if constexpr (H!=1){
             if(i!=C.nRows())
-                SmallestMultMatMat<H-1,W>(A,B,C,i,j);
+                SmallestMultMatMat<H-1,W,init>(A,B,C,i,j);
         }
     }
 
@@ -270,7 +270,10 @@ namespace bla
                 sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k +l * Adist)), y1, sum[l]);
         }
         for(size_t l =0;l<H;++l){
-            sum[l] += ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
+            if constexpr (!init){
+                sum[l] += ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
+            }
+
             sum[l].Store(Cij + l*Cdist);
         }
     }
@@ -281,14 +284,14 @@ namespace bla
         {
             size_t i = 0;
             for (; i + H <= C.nRows(); i += H){
-                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                MultMatMatKernel<H, W, init>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
             if(i!=C.nRows())
-                SmallestMultMatMat<3, W>(A,B,C,i,j);
+                SmallestMultMatMat<3, W, init>(A,B,C,i,j);
         }
         if constexpr (W!=1){
             if(j!=C.nCols())
-                MultMatMat2<H,W/2>(A, B, C, j);
+                MultMatMat2<H, W-1, init>(A, B, C, j);
         }
     }
 
@@ -306,7 +309,10 @@ namespace bla
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
-                MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),0);
+                if(!i1)
+                    MultMatMat2<4, 12,1>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),0);
+                else
+                    MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),0);
             }
         }
     }
@@ -315,7 +321,6 @@ namespace bla
     Matrix<T, ORD> InnerProduct(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        res = 0;
         MultMatMat(m1, m2, res);
         return res;
     }
