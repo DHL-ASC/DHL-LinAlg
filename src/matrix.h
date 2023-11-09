@@ -309,7 +309,7 @@ namespace bla
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
-                if(!i1)
+                if(!j1)
                     MultMatMat2<4, 12,1>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),0);
                 else
                     MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),0);
