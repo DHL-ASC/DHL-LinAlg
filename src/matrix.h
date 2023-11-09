@@ -521,6 +521,29 @@ namespace bla
         return (*dispatch_MatMatMult[wa])(m1, m2);
     }
 
+
+    template <size_t H, size_t W>
+    inline void SmallestMultMatMatKernel(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t, size_t);
+
+    template <size_t H, size_t W>
+    void MultMatMatKernel(size_t, double*, size_t, double*, size_t, double*, size_t);
+
+//error: partial specialization not allowed
+    // template <size_t W>
+    // inline void SmallestMultMatMatKernel<1,W>(size_t, double, size_t, double, size_t, double, size_t, size_t);
+
+    // template<size_t H>
+    // inline void MultMatMat2<H,1>(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t);
+
+    template <size_t H, size_t W>
+    inline void SmallestMultMatMatKernel(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t i, size_t j){
+        for(;i+H<=C.nRows(); i+=H){
+                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+        }
+        if constexpr (H!=1)
+            SmallestMultMatMatKernel<H-1,W>(A,B,C,i,j);
+    }
+
     template <size_t H, size_t W>
     void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist)
     {
@@ -540,57 +563,23 @@ namespace bla
         }
     }
 
-    void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
+    template<size_t H, size_t W>
+    inline void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t j)
     {
-        constexpr size_t H = 4;
-        constexpr size_t W = 12;
-        size_t j = 0;
         for (; j + W <= C.nCols(); j += W)
         {
             size_t i = 0;
-            for (; i + H <= C.nRows(); i += H)
-            {
-                MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            for (; i + H <= C.nRows(); i += H){
+                // if(!i){
+                //     InitMultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                // }else{
+                    MultMatMatKernel<H, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                // }
             }
-            if(i+3 == C.nRows()){
-                MultMatMatKernel<3, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }else if(i+2 == C.nRows()){
-                MultMatMatKernel<2, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }else if(i+1 == C.nRows()){
-                MultMatMatKernel<1, W>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
+            SmallestMultMatMatKernel<4, W>(A,B,C,i,j);
         }
-        for (; j + 4 <= C.nCols(); j += 4)
-        {
-            size_t i = 0;
-            for (; i + H <= C.nRows(); i += H)
-            {
-                MultMatMatKernel<H, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-            if(i+3 == C.nRows()){
-                MultMatMatKernel<3, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }else if(i+2 == C.nRows()){
-                MultMatMatKernel<2, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }else if(i+1 == C.nRows()){
-                MultMatMatKernel<1, 4>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-        }
-        for (; j < C.nCols(); ++j)
-        {
-            size_t i = 0;
-            for (; i + H <= C.nRows(); i += H)
-            {
-                MultMatMatKernel<H, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-            if(i+3 == C.nRows()){
-                MultMatMatKernel<3, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }else if(i+2 == C.nRows()){
-                MultMatMatKernel<2, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }else if(i+1 == C.nRows()){
-                MultMatMatKernel<1, 1>(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-            }
-        }
-
+        if constexpr (W!=1)
+            MultMatMat2<H,W-1>(A, B, C, j);
     }
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
@@ -608,7 +597,8 @@ namespace bla
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
-                MultMatMat2(Ablock, B.Rows(j1, j2), C.Rows(i1, i2));
+                size_t j=0;
+                MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2),j);
             }
         }
     }
