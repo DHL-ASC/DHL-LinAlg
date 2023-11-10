@@ -254,7 +254,7 @@ namespace bla
         if constexpr (H != 1)
         {
             if (i != C.nRows())
-                SmallestMultMatMat<H - 1, W, init>(A, B, C, i, j);
+                SmallestMultMatMat<H / 2, W, init>(A, B, C, i, j);
         }
     }
 
@@ -289,7 +289,7 @@ namespace bla
         if constexpr (W != 1)
         {
             if (j != C.nCols())
-                MultMatMat2<H, W - 1, init>(A, B, C, j);
+                MultMatMat2<H, W / 2, init>(A, B, C, j);
         }
     }
 
@@ -297,9 +297,13 @@ namespace bla
     {
         constexpr size_t BH = 144;
         constexpr size_t BW = 144; // 168//144//96
+        ASC_HPC::TaskManager::RunParallel([&A, &B, &C](int id, int numThreads)
+                                          {                    
+        size_t i1 = id * BH;
         alignas(64) double memBA[BH * BW];
-        for (size_t i1 = 0; i1 < A.nRows(); i1 += BH)
+        for (; i1 < A.nRows(); i1 += BH * numThreads)
         {
+            // std::cout << "id: "<< id << "i1: " << i1 << std::endl;
             size_t j1 = 0;
             for (; j1 < A.nCols(); j1 += BW)
             {
@@ -313,7 +317,7 @@ namespace bla
                 else
                     MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2), 0);
             }
-        }
+        } });
     }
 
     template <typename T, ORDERING ORD>
