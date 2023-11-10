@@ -295,10 +295,10 @@ namespace bla
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        constexpr size_t BH = 144;
-        constexpr size_t BW = 144; // 168//144//96
         ASC_HPC::TaskManager::RunParallel([&A, &B, &C](int id, int numThreads)
                                           {                    
+        constexpr size_t BH = 144;
+        constexpr size_t BW = 144; // 168//144//96
         size_t i1 = id * BH;
         alignas(64) double memBA[BH * BW];
         for (; i1 < A.nRows(); i1 += BH * numThreads)
