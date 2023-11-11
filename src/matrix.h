@@ -330,6 +330,37 @@ namespace bla
         return res;
     }
 
+#define KERNEL_WIDTH 12
+#define KERNEL_HEIGHT 4
+
+
+    void (*dispatch_MatMatMult[KERNEL_HEIGHT][KERNEL_WIDTH])(size_t, double *, size_t, double *, size_t, double *, size_t);  //rowwise
+
+    //r*KERNEL_WIDTH+c
+
+    template<size_t I, size_t J>
+    void InnerIteratorDispatch(){
+        dispatch_MatMatMult[I][J] = &MultMatMatKernel<I,J>;
+        
+        if constexpr (J!=1)
+            InnerIteratorDispatch<I,J-1>();
+    }
+
+    template<size_t I, size_t J>
+    void IteratorDispatch(){
+        InnerIteratorDispatch<I,J>();
+        
+        if constexpr (I!=1)
+            IteratorDispatch<I-1,J>();
+    }
+
+
+    auto init_MatMatMult = []()
+    {
+        IteratorDispatch<KERNEL_HEIGHT,KERNEL_WIDTH> ();
+        return 1;
+    }();
+
 } // namespace bla
 
 #endif
