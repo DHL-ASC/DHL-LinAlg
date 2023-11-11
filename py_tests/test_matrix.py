@@ -3,7 +3,7 @@ import pickle
 import pytest
 import numpy as np
 
-from dhllinalg.bla import Matrix, Vector, InnerProduct
+from dhllinalg.bla import Matrix, Vector, InnerProduct, ParallelComputing
 
 
 @pytest.fixture(name="v3")
@@ -55,6 +55,10 @@ def matrix_matrix_multiplication(matrix_sizes, method):
     elif method == "InnerProduct":
         c = InnerProduct(m, n)
         d = InnerProduct(n, m)
+    elif method == "InnerProductParallel":
+        with ParallelComputing():
+            c = InnerProduct(m, n)
+            d = InnerProduct(n, m)
 
     assert np.array_equal(np.asarray(c), np.dot(numpy_m, numpy_n))
     assert np.array_equal(np.asarray(d), np.dot(numpy_n, numpy_m))
@@ -68,7 +72,7 @@ matrix_sizes = [
     ((9, 83), (83, 9)),  # Test with 9x83 and 83x9 matrices
     ((512, 1024), (1024, 512)),  # Test with 512x1024 and 1024x512 matrices
 ]
-methods = ["normal", "InnerProduct"]
+methods = ["normal", "InnerProduct", "InnerProductParallel"]
 matrix_size_and_methods = [
     (size, method) for size in matrix_sizes for method in methods
 ]
