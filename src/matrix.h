@@ -24,13 +24,13 @@ namespace bla
     template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class Matrix;
 
-    template <size_t H, size_t W, short init = 0>
+    template <size_t H, size_t W, bool init = false>
     inline void SmallestMultMatMat(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t, size_t) noexcept;
 
-    template <size_t H, size_t W, short init = 0>
+    template <size_t H, size_t W, bool init = false>
     inline void MultMatMatKernel(size_t, double *, size_t, double *, size_t, double *, size_t) noexcept;
 
-    template <size_t H, size_t W, short init = 0>
+    template <size_t H, size_t W, bool init = false>
     void MultMatMat2(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t);
 
     template <typename T, ORDERING ORD>
@@ -245,7 +245,7 @@ namespace bla
         return ost;
     }
 
-    template <size_t H, size_t W, short init>
+    template <size_t H, size_t W, bool init>
     inline void SmallestMultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t i, size_t j) noexcept
     {
         for (; i + H <= C.nRows(); i += H)
@@ -258,12 +258,17 @@ namespace bla
         }
     }
 
-    template <size_t H, size_t W, short init>
+    template <size_t H, size_t W, bool init>
     inline void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist) noexcept
     {
         ASC_HPC::SIMD<double, W> sum[H];
         for (size_t l = 0; l < H; ++l)
-            sum[l] = ASC_HPC::SIMD<double, W>(0.0);
+        {
+            if constexpr (!init)
+                sum[l] = ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
+            else
+                sum[l] = ASC_HPC::SIMD<double, W>(0.0);
+        }
         for (size_t k = 0; k < Aw; ++k)
         {
             ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
@@ -273,14 +278,11 @@ namespace bla
         }
         for (size_t l = 0; l < H; ++l)
         {
-            if constexpr (!init)
-                sum[l] += ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
-
             sum[l].Store(Cij + l * Cdist);
         }
     }
 
-    template <size_t H, size_t W, short init>
+    template <size_t H, size_t W, bool init>
     void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t j)
     {
         for (; j + W <= C.nCols(); j += W)
@@ -313,7 +315,7 @@ namespace bla
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
                 if (!j1)
-                    MultMatMat2<4, 12, 1>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2), 0);
+                    MultMatMat2<4, 12, true>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2), 0);
                 else
                     MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2), 0);
             }
