@@ -65,7 +65,7 @@ while s <= maxS:
             sys.stdout.write(f"\tMeasuring with {NumThreads()} threads...\t")
             sys.stdout.flush()
             start = time.time_ns()
-            # d = m * n
+            d = InnerProduct(m, n)
             end = time.time_ns()
             print("done.")
             t = end - start
@@ -73,7 +73,7 @@ while s <= maxS:
             threads.append("c" + str(nThreads))
             time_in_ns.append(t)
             matrix_size.append(s)
-            gmacs.append(5)
+            gmacs.append(s**3 / t)
             print(f"\tt={t/1e9}s")
 
     s += incS
