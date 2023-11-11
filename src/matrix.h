@@ -312,8 +312,8 @@ namespace bla
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        //ASC_HPC::TaskManager::RunParallel([&A, &B, &C](int id, int numThreads)
-        //                                  {     
+        ASC_HPC::TaskManager::RunParallel([&A, &B, &C](int id, int numThreads)
+                                          {     
         size_t numThreads = 1;
         size_t id =0;      
 
@@ -337,7 +337,7 @@ namespace bla
                 else
                     MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2));
             }
-        } //});
+        } });
     }
 
     template <typename T, ORDERING ORD>
