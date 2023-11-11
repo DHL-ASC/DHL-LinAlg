@@ -1,6 +1,10 @@
 #ifndef FILE_MATRIX_H
 #define FILE_MATRIX_H
 
+
+#define KERNEL_WIDTH 12
+#define KERNEL_HEIGHT 4
+
 #include <iostream>
 #include <memory> //for shared_ptr
 #include <exception>
@@ -19,6 +23,7 @@ namespace bla
         RowMajor
     };
 
+
     template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class MatrixView;
     template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
@@ -31,7 +36,9 @@ namespace bla
     inline void MultMatMatKernel(size_t, double *, size_t, double *, size_t, double *, size_t) noexcept;
 
     template <size_t H, size_t W, bool INIT = false>
-    void MultMatMat2(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, size_t);
+    void MultMatMat2(MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>);
+
+    void (*dispatch_MatMatMult[KERNEL_HEIGHT+1][KERNEL_WIDTH+1][2])(size_t, double *, size_t, double *, size_t, double *, size_t);
 
     template <typename T, ORDERING ORD>
     class MatrixView : public MatExpr<MatrixView<T, ORD>>
@@ -260,47 +267,58 @@ namespace bla
 
     template <size_t H, size_t W, bool INIT>
     inline void MultMatMatKernel(size_t Aw, double *Ai, size_t Adist, double *Bj, size_t Bdist, double *Cij, size_t Cdist) noexcept
-    {
-        ASC_HPC::SIMD<double, W> sum[H];
-        for (size_t l = 0; l < H; ++l)
-        {
-            if constexpr (!INIT)
-                sum[l] = ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
-            else
-                sum[l] = ASC_HPC::SIMD<double, W>(0.0);
-        }
-        for (size_t k = 0; k < Aw; ++k)
-        {
-            ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
-
+    {   
+        if constexpr (H==0 || W==0)
+            return;
+        else{
+            ASC_HPC::SIMD<double, W> sum[H];
             for (size_t l = 0; l < H; ++l)
-                sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + l * Adist)), y1, sum[l]);
-        }
-        for (size_t l = 0; l < H; ++l)
-        {
-            sum[l].Store(Cij + l * Cdist);
+            {
+                if constexpr (!INIT)
+                    sum[l] = ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
+                else
+                    sum[l] = ASC_HPC::SIMD<double, W>(0.0);
+            }
+            for (size_t k = 0; k < Aw; ++k)
+            {
+                ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
+
+                for (size_t l = 0; l < H; ++l)
+                    sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k + l * Adist)), y1, sum[l]);
+            }
+            for (size_t l = 0; l < H; ++l)
+            {
+                sum[l].Store(Cij + l * Cdist);
+            }
         }
     }
 
     template <size_t H, size_t W, bool INIT>
-    void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C, size_t j)
+    void MultMatMat2(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        for (; j + W <= C.nCols(); j += W)
-            SmallestMultMatMat<H, W, INIT>(A, B, C, 0, j);
-
-        if constexpr (W != 1)
-        {
-            if (j != C.nCols())
-                MultMatMat2<H, W / 2, INIT>(A, B, C, j);
+        size_t j = 0;
+        size_t i;
+        for (; j + W <= C.nCols(); j += W){
+            for (i=0; i + H <= C.nRows(); i += H){
+                (*dispatch_MatMatMult[H][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+            (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
         }
+        for (i=0; i + H <= C.nRows(); i += H){
+            (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+        }
+        (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
     }
 
     void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        ASC_HPC::TaskManager::RunParallel([&A, &B, &C](int id, int numThreads)
-                                          {                    
-        constexpr size_t BH = 144;
-        constexpr size_t BW = 144; // 168//144//96
+        //ASC_HPC::TaskManager::RunParallel([&A, &B, &C](int id, int numThreads)
+        //                                  {     
+        size_t numThreads = 1;
+        size_t id =0;      
+
+        constexpr size_t BH = 96;
+        constexpr size_t BW = 96; // 168//144//96
         size_t i1 = id * BH;
         alignas(64) double memBA[BH * BW];
         for (; i1 < A.nRows(); i1 += BH * numThreads)
@@ -315,11 +333,11 @@ namespace bla
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
                 Ablock = A.Rows(i1, i2).Cols(j1, j2);
                 if (!j1)
-                    MultMatMat2<4, 12, true>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2), 0);
+                    MultMatMat2<4, 12, true>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2));
                 else
-                    MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2), 0);
+                    MultMatMat2<4, 12>(Ablock, B.Rows(j1, j2), C.Rows(i1, i2));
             }
-        } });
+        } //});
     }
 
     template <typename T, ORDERING ORD>
@@ -330,19 +348,13 @@ namespace bla
         return res;
     }
 
-#define KERNEL_WIDTH 12
-#define KERNEL_HEIGHT 4
-
-
-    void (*dispatch_MatMatMult[KERNEL_HEIGHT][KERNEL_WIDTH])(size_t, double *, size_t, double *, size_t, double *, size_t);  //rowwise
-
-    //r*KERNEL_WIDTH+c
 
     template<size_t I, size_t J>
     void InnerIteratorDispatch(){
-        dispatch_MatMatMult[I][J] = &MultMatMatKernel<I,J>;
+        dispatch_MatMatMult[I][J][0] = &MultMatMatKernel<I,J>;
+        dispatch_MatMatMult[I][J][1] = &MultMatMatKernel<I,J,true>;
         
-        if constexpr (J!=1)
+        if constexpr (J!=0)
             InnerIteratorDispatch<I,J-1>();
     }
 
@@ -350,7 +362,7 @@ namespace bla
     void IteratorDispatch(){
         InnerIteratorDispatch<I,J>();
         
-        if constexpr (I!=1)
+        if constexpr (I!=0)
             IteratorDispatch<I-1,J>();
     }
 
@@ -358,6 +370,7 @@ namespace bla
     auto init_MatMatMult = []()
     {
         IteratorDispatch<KERNEL_HEIGHT,KERNEL_WIDTH> ();
+
         return 1;
     }();
 
