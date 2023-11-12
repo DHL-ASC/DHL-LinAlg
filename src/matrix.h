@@ -291,41 +291,43 @@ namespace bla
     template <size_t H, size_t W, bool INIT>
     void MultMatMat2(MatrixView<double, RowMajor> A,MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        size_t j = 0;
-        size_t i;
-        for (; j + W <= C.nCols(); j += W){
-            //copy a cols to ablock here
-            for (i=0; i + H <= C.nRows(); i += H){
-                if(!j)
-                   A.Rows(i,i+H) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-                (*dispatch_MatMatMult[H][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+        ASC_HPC::TaskManager::RunParallel([&A, &largeA, &B, &C](int id, int numThreads){ 
+            size_t j = id*W;
+            size_t i;
+            alignas(64) double *memBA = (double*)malloc(A.nCols() * H * sizeof(double));
+            for (; j + W <= C.nCols(); j += W*numThreads){
+
+                MatrixView<double,ColMajor> Bblock(B.nRows(), w, B.nCols(), memBA);
+                Bblock.Cols(0, W) = B.Cols(j, j+W);
+                for (i=0; i + H <= C.nRows(); i += H){
+                    if(!i)
+                        A.Rows(i,i+H).Cols() = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                    (*dispatch_MatMatMult[H][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                }
+                A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
             }
-            if(!j)
-               A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
-            (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-        }
-        for (i=0; i + H <= C.nRows(); i += H){
-            if(!j)
-                A.Rows(i,i+H) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-            (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
-        }
-        if(!j)
-            A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
-        (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            if(j<C.nCols()&&j+W>C.nCols()){
+                for (i=0; i + H <= C.nRows(); i += H){
+                    // if(!j)
+                    //     A.Rows(i,i+H) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                    (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                }
+                // if(!j)
+                //     A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+            }
+        });
     }
 
-    void MultMatMat(const MatrixView<double, RowMajor> A, const MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
-    {
-        ASC_HPC::TaskManager::RunParallel([A, B, C](int id, int numThreads)
-                                          {       
-
-        constexpr size_t BH = 144;
-        constexpr size_t BW = 144; // 168//144//96
-        size_t i1 = id * BH;
+    void MultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
+    {     
+        constexpr size_t BH = 96;
+        constexpr size_t BW = 96; // 168//144//96
+        size_t i1 = 0;
         alignas(64) double memBA[BH * BW];
-        for (; i1 < A.nRows(); i1 += BH * numThreads)
+        for (; i1 < A.nRows(); i1 += BH)
         {
-            // std::cout << "id: "<< id << "i1: " << i1 << std::endl;
             size_t j1 = 0;
             for (; j1 < A.nCols(); j1 += BW)
             {
@@ -333,19 +335,17 @@ namespace bla
                 size_t j2 = std::min(A.nCols(), j1 + BW);
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
-                //Ablock = A.Rows(i1, i2).Cols(j1, j2);
-                //Ablock.Rows(0,i2-i1) = A.Rows(i1, i2).Cols(j1, j2);
-                // std::cout<<Ablock<<std::endl;
+                Ablock = A.Rows(i1, i2).Cols(j1, j2);
                 if (!j1)
                     MultMatMat2<4, 12, true>(Ablock, A,i1,i2,j1,j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 else
                     MultMatMat2<4, 12>(Ablock, A,i1,i2,j1,j2, B.Rows(j1, j2), C.Rows(i1, i2));
             }
-        } });
+        }
     }
 
     template <typename T, ORDERING ORD>
-    Matrix<T, ORD> InnerProduct(const MatrixView<T, ORD> &m1, const MatrixView<T, ORD> &m2)
+    Matrix<T, ORD> InnerProduct(MatrixView<T, ORD> &m1, MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
         MultMatMat(m1, m2, res);
