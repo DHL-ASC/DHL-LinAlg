@@ -291,32 +291,35 @@ namespace bla
     template <size_t H, size_t W, bool INIT>
     void MultMatMat2(MatrixView<double, RowMajor> A,MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        ASC_HPC::TaskManager::RunParallel([&A, &largeA, &B, &C](int id, int numThreads){ 
+        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads){ 
             size_t j = id*W;
             size_t i;
             alignas(64) double *memBA = (double*)malloc(A.nCols() * H * sizeof(double));
             for (; j + W <= C.nCols(); j += W*numThreads){
 
-                MatrixView<double,ColMajor> Bblock(B.nRows(), w, B.nCols(), memBA);
-                Bblock.Cols(0, W) = B.Cols(j, j+W);
+                MatrixView Bblock(B.nRows(), W, B.nCols(), memBA);
+                Bblock = B.Cols(j, j+W);
                 for (i=0; i + H <= C.nRows(); i += H){
                     if(!i)
-                        A.Rows(i,i+H).Cols() = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-                    (*dispatch_MatMatMult[H][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                        A.Rows(i,i+H) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                    (*dispatch_MatMatMult[H][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &Bblock(0, 0), Bblock.Dist(), &C(i, j), C.Dist());
                 }
                 A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
-                (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(A.nCols(), &A(i, 0), A.Dist(), &Bblock(0, 0), Bblock.Dist(), &C(i, j), C.Dist());
             }
             if(j<C.nCols()&&j+W>C.nCols()){
+                MatrixView Bblock(B.nRows(), C.nCols()-j, B.nCols(), memBA);
+                Bblock.Cols(0, C.nCols()-j) = B.Cols(j, C.nCols());
                 for (i=0; i + H <= C.nRows(); i += H){
-                    // if(!j)
-                    //     A.Rows(i,i+H) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-                    (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                    if(!j)
+                        A.Rows(i,i+H) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                    (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &Bblock(0, 0), Bblock.Dist(), &C(i, j), C.Dist());
                 }
-                // if(!j)
-                //     A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
-                (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &B(0, j), B.Dist(), &C(i, j), C.Dist());
+                if(!j)
+                    A.Rows(i,C.nRows()) = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(A.nCols(), &A(i, 0), A.Dist(), &Bblock(0, 0), Bblock.Dist(), &C(i, j), C.Dist());
             }
+            free(memBA);
         });
     }
 
@@ -335,7 +338,7 @@ namespace bla
                 size_t j2 = std::min(A.nCols(), j1 + BW);
 
                 MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
-                Ablock = A.Rows(i1, i2).Cols(j1, j2);
+                //Ablock = A.Rows(i1, i2).Cols(j1, j2);
                 if (!j1)
                     MultMatMat2<4, 12, true>(Ablock, A,i1,i2,j1,j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 else
