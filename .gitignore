@@ -8,6 +8,9 @@
 .vscode/*
 
 
+**/*.trace
+*.trace
+
 # Compiled Object files
 **/.DS_Store
 *.slo

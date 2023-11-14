@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include <iostream>
+#include <taskmanager.h>
 
 using namespace std;
 
@@ -85,6 +86,8 @@ int main()
         std::cout << "M*x = " << res << std::endl;
     }
     {
+    ASC_HPC::TaskManager tm;
+    tm.StartWorkers();
     int k = 200;
     bla::Matrix<double> m(k,k);
     bla::Matrix<double> n(k,k);
@@ -103,6 +106,8 @@ int main()
     cout <<" time = " << time 
            << " ms, GFlops = " << (k*k*k)/time/1e6
            << endl;
+    
+    tm.StopWorkers();
     }
 
     

@@ -34,7 +34,7 @@ namespace bla
     inline void MultMatMatKernel(size_t, double *, size_t, double *, size_t, double *, size_t) noexcept;
 
     template <size_t H, size_t W, bool INIT = false>
-    void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>);
+    void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor>, MatrixView<double, RowMajor>);
 
     void (*dispatch_MatMatMult[KERNEL_HEIGHT + 1][KERNEL_WIDTH + 1][2])(size_t, double *, size_t, double *, size_t, double *, size_t);
 
@@ -294,38 +294,64 @@ namespace bla
     }
 
     template <size_t H, size_t W, bool INIT>
-    void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> largeB, MatrixView<double, RowMajor> C)
+    void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> largeB, MatrixView<double, RowMajor> C)
     {
-        ASC_HPC::timeline = std::make_unique<ASC_HPC::TimeLine>("InnerProduct.trace");
+        size_t firstW = std::min(W, C.nCols());
+        alignas(64) double memB[W * 96];
+        MatrixView<double, RowMajor> B(96, firstW, 96, memB);
+        static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+        tb.Start();
+        B = largeB.Cols(0,firstW); //j2<W?
+        tb.Stop();
+        //copy Ablock using all threads
         ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
-                                          { 
-            size_t j = id*W;
+        {
+            size_t j =0;
+            size_t i = id*H;
+            for (; i + H <= C.nRows(); i += H*numThreads){
+                {
+                    static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                    ta.Start();
+                    A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                    ta.Stop();
+                }
+                static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(firstW), { 0, 1, 0});
+                tk.Start();
+                (*dispatch_MatMatMult[H][firstW][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                tk.Stop();
+            }
+            if(i<C.nRows()&&i+H>C.nRows()){
+                static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                ta.Start();
+                A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                ta.Stop();
+
+                static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(firstW), { 0, 1, 0});
+                tk.Start();
+                (*dispatch_MatMatMult[C.nRows()-i][firstW][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                tk.Stop();
+            }
+            });
+
+        //sync threads before starting to work with cached Ablock
+        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+        { 
+            size_t j = id*W+W;
             size_t i;
+
+            alignas(64) double memB[W * 96];
+            MatrixView<double, RowMajor> B(96, W, 96, memB);
+
             for (; j + W <= C.nCols(); j += W*numThreads){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
                 B = largeB.Cols(j,j+W);
                 tb.Stop();
                 for (i=0; i + H < C.nRows(); i += H){
-                    if(!j)
-                    {
-                        static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
-                        ta.Start();
-                        A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-                        ta.Stop();
-                    }
                     static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(W), { 0, 1, 0});
                     tk.Start();
                     MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
                     tk.Stop();
-                }
-                if(!j)
-                {
-                    static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
-                    ta.Start();
-                    A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
-                    ta.Stop();
-                    // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                 }
 
                 static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(W), { 0, 1, 0});
@@ -339,27 +365,11 @@ namespace bla
                 B = largeB.Cols(j,C.nCols());
                 tb.Stop();
                 for (i=0; i + H <= C.nRows(); i += H){
-                     if(!j)
-                    {
-                        static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
-                        ta.Start();
-                        A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-                        ta.Stop();
-                        // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
-                    }
                     static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
                     tk.Start();
                     //std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                     (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
                     tk.Stop();
-                }
-                if(!j)
-                {
-                    static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
-                    ta.Start();
-                    A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
-                    ta.Stop();
-                    // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                 }
                 static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
                 tk.Start();
@@ -370,6 +380,7 @@ namespace bla
 
     void MultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
+        ASC_HPC::timeline = std::make_unique<ASC_HPC::TimeLine>("InnerProduct.trace");
         constexpr size_t BH = 96;
         constexpr size_t BW = 96; // 168//144//96
         size_t i1 = 0;
@@ -378,10 +389,6 @@ namespace bla
         for (size_t i = 0; i < BH / 4; i++)
             Ablock[i] = MatrixView<double, ColMajor>(4, BW, 4, memBA[i]);
 
-        alignas(64) double memB[12 * BH];
-        MatrixView<double, RowMajor> Bblock(BH, 12, BH, memB);
-        // for (size_t i = 0; i < BH / 4; i++)
-        //     Ablock[i] = MatrixView<double, ColMajor>(4, BW, 4, memBA[i]);
         for (; i1 < A.nRows(); i1 += BH)
         {
             size_t j1 = 0;
@@ -389,14 +396,10 @@ namespace bla
             {
                 size_t i2 = std::min(A.nRows(), i1 + BH);
                 size_t j2 = std::min(A.nCols(), j1 + BW);
-
-                // MatrixView Ablock(i2 - i1, j2 - j1, BW, memBA);
-
-                // Ablock = A.Rows(i1, i2).Cols(j1, j2);
                 if (!j1)
-                    MultMatMat2<4, 12, true>(Ablock, A, i1, i2, j1, j2, Bblock, B.Rows(j1, j2), C.Rows(i1, i2));
+                    MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 else
-                    MultMatMat2<4, 12>(Ablock, A, i1, i2, j1, j2, Bblock, B.Rows(j1, j2), C.Rows(i1, i2));
+                    MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
             }
         }
     }
