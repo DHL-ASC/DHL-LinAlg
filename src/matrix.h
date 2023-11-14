@@ -10,8 +10,11 @@
 #include "expression.h"
 #include "vector.h"
 #include <simd.h>
+#include <sstream>
+#include <string>
 
 #include <taskmanager.h>
+#include <timer.h>
 // namespace py = pybind11;
 
 namespace bla
@@ -293,45 +296,75 @@ namespace bla
     template <size_t H, size_t W, bool INIT>
     void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> largeB, MatrixView<double, RowMajor> C)
     {
+        ASC_HPC::timeline = std::make_unique<ASC_HPC::TimeLine>("InnerProduct.trace");
         ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
                                           { 
             size_t j = id*W;
             size_t i;
             for (; j + W <= C.nCols(); j += W*numThreads){
+                static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+                tb.Start();
                 B = largeB.Cols(j,j+W);
+                tb.Stop();
                 for (i=0; i + H < C.nRows(); i += H){
                     if(!j)
                     {
+                        static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                        ta.Start();
                         A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
-                        // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
+                        ta.Stop();
                     }
+                    static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(W), { 0, 1, 0});
+                    tk.Start();
                     MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                    tk.Stop();
                 }
                 if(!j)
                 {
+                    static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                    ta.Start();
                     A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                    ta.Stop();
                     // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                 }
 
+                static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(W), { 0, 1, 0});
+                tk.Start();
                 (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                tk.Stop();
             }
             if(j<C.nCols()&&j+W>C.nCols()){
+                static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+                tb.Start();
                 B = largeB.Cols(j,C.nCols());
+                tb.Stop();
                 for (i=0; i + H <= C.nRows(); i += H){
                      if(!j)
                     {
+                        static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                        ta.Start();
                         A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                        ta.Stop();
                         // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                     }
-                    std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
+                    static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
+                    tk.Start();
+                    //std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                     (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                    tk.Stop();
                 }
                 if(!j)
                 {
+                    static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                    ta.Start();
                     A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                    ta.Stop();
                     // std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                 }
+                static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
+                tk.Start();
                 (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                tk.Stop();
             } });
     }
 
