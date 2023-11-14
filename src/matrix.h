@@ -300,15 +300,15 @@ namespace bla
     {
         {//block for lifetime of B, firstW
             size_t firstW = std::min(W, C.nCols());
-            alignas(64) double memB[W * ABLOCK_HEIGHT];
+            //copy Ablock using all threads
+            ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+            {
+                alignas(64) double memB[W * ABLOCK_HEIGHT];
             MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, firstW, ABLOCK_HEIGHT, memB);
             static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
             tb.Start();
             B = largeB.Cols(0,firstW); //j2<W?
             tb.Stop();
-            //copy Ablock using all threads
-            ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
-            {
                 size_t j =0;
                 size_t i = id*H;
                 for (; i + H <= C.nRows(); i += H*numThreads){
