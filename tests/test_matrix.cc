@@ -86,8 +86,7 @@ int main()
         std::cout << "M*x = " << res << std::endl;
     }
     {
-    ASC_HPC::TaskManager tm;
-    tm.StartWorkers();
+    ASC_HPC::timeline = std::make_unique<ASC_HPC::TimeLine>("InnerProduct.trace");
     int k = 200;
     bla::Matrix<double> m(k,k);
     bla::Matrix<double> n(k,k);
@@ -97,17 +96,20 @@ int main()
             n(i,j) = 2*i+j;
         }
     }
+    
+    ASC_HPC::TaskManager tm;
+    tm.StartWorkers();
     auto start = std::chrono::high_resolution_clock::now();
     auto a = bla::InnerProduct(m,n);
-
     auto end = std::chrono::high_resolution_clock::now();
+    tm.StopWorkers();
+
     double time = std::chrono::duration<double, std::milli>(end-start).count();
     cout << "a(0,0) = " << a(0,0) << endl;
     cout <<" time = " << time 
            << " ms, GFlops = " << (k*k*k)/time/1e6
            << endl;
     
-    tm.StopWorkers();
     }
 
     

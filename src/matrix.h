@@ -380,7 +380,6 @@ namespace bla
 
     void MultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
     {
-        ASC_HPC::timeline = std::make_unique<ASC_HPC::TimeLine>("InnerProduct.trace");
         constexpr size_t BH = 96;
         constexpr size_t BW = 96; // 168//144//96
         size_t i1 = 0;
