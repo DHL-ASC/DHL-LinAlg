@@ -299,16 +299,16 @@ namespace bla
     void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> largeB, MatrixView<double, RowMajor> C)
     {
         {//block for lifetime of B, firstW
-            size_t firstW = std::min(W, C.nCols());
+            size_t firstW = std::min(C.nCols(), W);
             //copy Ablock using all threads
             ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
             {
                 alignas(64) double memB[W * ABLOCK_HEIGHT];
-            MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, firstW, ABLOCK_HEIGHT, memB);
-            static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
-            tb.Start();
-            B = largeB.Cols(0,firstW); //j2<W?
-            tb.Stop();
+                MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, firstW, firstW, memB);
+                static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+                tb.Start();
+                B = largeB.Cols(0,firstW); //j2<W?
+                tb.Stop();
                 size_t j =0;
                 size_t i = id*H;
                 for (; i + H <= C.nRows(); i += H*numThreads){
@@ -344,7 +344,7 @@ namespace bla
             size_t i;
 
             alignas(64) double memB[W * ABLOCK_HEIGHT];
-            MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, W, ABLOCK_HEIGHT, memB);
+            MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, W, W, memB);
 
             for (; j + W <= C.nCols(); j += W*numThreads){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
@@ -409,7 +409,6 @@ namespace bla
     Matrix<T, ORD> InnerProduct(MatrixView<T, ORD> &m1, MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        res=0;
         MultMatMat(m1, m2, res);
         return res;
     }
