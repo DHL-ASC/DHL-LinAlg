@@ -300,7 +300,6 @@ namespace bla
     {
         {//block for lifetime of B, firstW
             size_t firstW = std::min(C.nCols(), W);
-            std::cout<<"firstW: "<<firstW<<std::endl;
             //copy Ablock using all threads
             ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
             {
@@ -309,8 +308,6 @@ namespace bla
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
                 B = largeB.Cols(0,firstW); //j2<W?
-
-                std::cout<<"B: "<<B<<std::endl;
                 tb.Stop();
                 size_t j =0;
                 size_t i = id*H;
@@ -353,8 +350,6 @@ namespace bla
                 tb.Start();
                 MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
                 B = largeB.Cols(j,j+W);
-
-                std::cout<<"B: "<<B<<std::endl;
                 tb.Stop();
                 for (i=0; i + H < C.nRows(); i += H){
                     static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(W), { 0, 1, 0});
@@ -373,8 +368,6 @@ namespace bla
                 tb.Start();
                 MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
                 B = largeB.Cols(j,C.nCols());
-
-                std::cout<<"B: "<<B<<std::endl;
                 tb.Stop();
                 for (i=0; i + H <= C.nRows(); i += H){
                     static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
