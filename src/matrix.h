@@ -300,6 +300,7 @@ namespace bla
     {
         {//block for lifetime of B, firstW
             size_t firstW = std::min(C.nCols(), W);
+            std::cout<<"firstW: "<<firstW<<std::endl;
             //copy Ablock using all threads
             ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
             {
@@ -308,6 +309,8 @@ namespace bla
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
                 B = largeB.Cols(0,firstW); //j2<W?
+
+                std::cout<<"B: "<<B<<std::endl;
                 tb.Stop();
                 size_t j =0;
                 size_t i = id*H;
@@ -398,7 +401,7 @@ namespace bla
                 size_t i2 = std::min(A.nRows(), i1 + ABLOCK_HEIGHT);
                 size_t j2 = std::min(A.nCols(), j1 + ABLOCK_WIDTH);
                 if (!j1)
-                    MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, false>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
+                    MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 else
                     MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
             }
