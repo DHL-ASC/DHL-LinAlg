@@ -305,7 +305,7 @@ namespace bla
             ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
             {
                 alignas(64) double memB[W * ABLOCK_HEIGHT];
-                MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, firstW, firstW, memB);
+                MatrixView<double, RowMajor> B(largeB.nRows(), firstW, firstW, memB);
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
                 B = largeB.Cols(0,firstW); //j2<W?
@@ -347,7 +347,7 @@ namespace bla
             size_t i;
 
             alignas(64) double memB[W * ABLOCK_HEIGHT];
-            MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, W, W, memB);
+            MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
 
             for (; j + W <= C.nCols(); j += W*numThreads){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
