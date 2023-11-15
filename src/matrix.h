@@ -307,7 +307,7 @@ namespace bla
         ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
         {
             static ASC_HPC::Timer ta("pack A micropanels", { 1, 1, 0});
-            ta.Start();
+            ta.Start(id);
             size_t j =0;
             size_t i = id*H;
             for (; i + H <= C.nRows(); i += H*numThreads){
@@ -326,33 +326,41 @@ namespace bla
         }
 
         //sync threads before starting to work with cached Ablock
-        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
-        { 
         static ASC_HPC::Timer tk("Microkernel w/ cached Ablock", { 0, 1, 0});
-        tk.Start();
-        size_t j = id*W+W;
-        size_t i;
+        tk.Start(0);
+        size_t j = W;
 
         alignas(64) double memB[W * ABLOCK_HEIGHT];
 
-        for (; j + W <= C.nCols(); j += W*numThreads){
+        for (; j + W <= C.nCols(); j += W){
             MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
             B = largeB.Cols(j,j+W);
-            for (i=0; i + H < C.nRows(); i += H){
+            ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+            { 
+            size_t i;
+            for (i=id*H; i + H < C.nRows(); i += H*numThreads){
                 MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             }
-            (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            if(i<C.nRows()&&i+H>C.nRows()){
+                (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            }
+            });
         }
         if(j<C.nCols()&&j+W>C.nCols()){
             MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
             B = largeB.Cols(j,C.nCols());
-            for (i=0; i + H <= C.nRows(); i += H){
+            ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+            { 
+            size_t i;
+            for (i=id*H; i + H <= C.nRows(); i += H*numThreads){
                 (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             }
-            (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            if(i<C.nRows()&&i+H>C.nRows()){
+                (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            }
+            });
         } 
         tk.Stop();
-        }); 
     }
 
     template <size_t H, size_t W, bool INIT>

@@ -97,17 +97,17 @@ int main()
         }
     }
     
-    ASC_HPC::TaskManager tm(4,true);
+    ASC_HPC::TaskManager tm(true);
     tm.StartWorkers();
-    auto start = std::chrono::high_resolution_clock::now();
+    auto startt = std::chrono::high_resolution_clock::now();
     auto a = bla::InnerProduct(m,n);
-    auto end = std::chrono::high_resolution_clock::now();
+    auto endt = std::chrono::high_resolution_clock::now();
     tm.StopWorkers();
 
-    double time = std::chrono::duration<double, std::milli>(end-start).count();
+    double timet = std::chrono::duration<double, std::milli>(endt-startt).count();
     cout << "a(0,0) = " << a(0,0) << endl;
-    cout <<" time = " << time 
-           << " ms, GFlops = " << (k*k*k)/time/1e6
+    cout <<" time = " << timet 
+           << " ms, GFlops = " << (k*k*k)/timet/1e6
            << endl;
     
     }
