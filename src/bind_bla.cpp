@@ -23,6 +23,9 @@ namespace bla
 
     public:
         ParallelComputing() : t() {}
+        ParallelComputing(size_t nthreads) : t(nthreads) {}
+        ParallelComputing(bool trace) : t(trace) {}
+        ParallelComputing(size_t nthreads, bool trace) : t(nthreads, trace) {}
         void Enter()
         {
             t.StartWorkers();
@@ -52,10 +55,12 @@ PYBIND11_MODULE(bla, m)
         "InnerProduct");
     py::class_<ParallelComputing>(m, "ParallelComputing")
         .def(py::init<>())
+        .def(py::init<size_t>(), py::arg("NumThreads"), "Run with n threads")
+        .def(py::init<bool>(), py::arg("Trace"), "Run paje-tracer, with multiple threads")
+        .def(py::init<size_t, bool>(), py::arg("NumThreads"), py::arg("Trace"), "Run paje-tracer, with n threads")
         .def("__enter__", &ParallelComputing::Enter)
         .def("__exit__", &ParallelComputing::Exit);
     //.def("__timing__", &ASC_HPC::TaskManager::Timing);
-    //.def(py::init<size_t>(), "pajetrace"_a, "Run paje-tracer, specify buffersize in bytes")
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),
