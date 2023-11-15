@@ -87,7 +87,7 @@ int main()
     }
     {
     
-    int k = 200;
+    int k = 2000;
     bla::Matrix<double> m(k,k);
     bla::Matrix<double> n(k,k);
     for(int i=0;i<k;++i){
@@ -97,7 +97,7 @@ int main()
         }
     }
     
-    ASC_HPC::TaskManager tm(true);
+    ASC_HPC::TaskManager tm(4,true);
     tm.StartWorkers();
     auto start = std::chrono::high_resolution_clock::now();
     auto a = bla::InnerProduct(m,n);
