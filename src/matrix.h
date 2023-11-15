@@ -369,7 +369,7 @@ namespace bla
             if(j<C.nCols()&&j+W>C.nCols()){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
-                B = largeB.Cols(j,C.nCols());
+                B.Cols(0,C.nCols()-j) = largeB.Cols(j,C.nCols());
                 tb.Stop();
                 for (i=0; i + H <= C.nRows(); i += H){
                     static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
