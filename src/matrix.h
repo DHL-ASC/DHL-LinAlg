@@ -347,12 +347,14 @@ namespace bla
             size_t i;
 
             alignas(64) double memB[W * ABLOCK_HEIGHT];
-            MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
 
             for (; j + W <= C.nCols(); j += W*numThreads){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
+                MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
                 B = largeB.Cols(j,j+W);
+
+                std::cout<<"B: "<<B<<std::endl;
                 tb.Stop();
                 for (i=0; i + H < C.nRows(); i += H){
                     static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(W), { 0, 1, 0});
@@ -369,7 +371,10 @@ namespace bla
             if(j<C.nCols()&&j+W>C.nCols()){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
-                B.Cols(0,C.nCols()-j) = largeB.Cols(j,C.nCols());
+                MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
+                B = largeB.Cols(j,C.nCols());
+
+                std::cout<<"B: "<<B<<std::endl;
                 tb.Stop();
                 for (i=0; i + H <= C.nRows(); i += H){
                     static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
