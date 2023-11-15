@@ -299,23 +299,23 @@ namespace bla
     void MultMatMat2(MatrixView<double, ColMajor> A[], MatrixView<double, RowMajor> largeA, size_t i1, size_t i2, size_t j1, size_t j2, MatrixView<double, RowMajor> largeB, MatrixView<double, RowMajor> C)
     {
         {//block for lifetime of B, firstW
-            size_t firstW = std::min(W, C.nCols());
-            alignas(64) double memB[W * ABLOCK_HEIGHT];
-            MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, firstW, ABLOCK_HEIGHT, memB);
-            static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
-            tb.Start();
-            B = largeB.Cols(0,firstW); //j2<W?
-            tb.Stop();
+            size_t firstW = std::min(C.nCols(), W);
             //copy Ablock using all threads
             ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
             {
+                alignas(64) double memB[W * ABLOCK_HEIGHT];
+                MatrixView<double, RowMajor> B(largeB.nRows(), firstW, firstW, memB);
+                static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+                tb.Start();
+                B = largeB.Cols(0,firstW); //j2<W?
+                tb.Stop();
                 size_t j =0;
                 size_t i = id*H;
                 for (; i + H <= C.nRows(); i += H*numThreads){
                     {
                         static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
                         ta.Start();
-                        A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                        A[i/H].Cols(0,j2-j1) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
                         ta.Stop();
                     }
                     static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(firstW), { 0, 1, 0});
@@ -326,7 +326,7 @@ namespace bla
                 if(i<C.nRows()&&i+H>C.nRows()){
                     static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
                     ta.Start();
-                    A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                    A[i/H].Rows(0,C.nRows()-i).Cols(0,j2-j1) = largeA.Rows(i1+i, i2).Cols(j1, j2);
                     ta.Stop();
 
                     static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(firstW), { 0, 1, 0});
@@ -344,11 +344,11 @@ namespace bla
             size_t i;
 
             alignas(64) double memB[W * ABLOCK_HEIGHT];
-            MatrixView<double, RowMajor> B(ABLOCK_HEIGHT, W, ABLOCK_HEIGHT, memB);
 
             for (; j + W <= C.nCols(); j += W*numThreads){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
+                MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
                 B = largeB.Cols(j,j+W);
                 tb.Stop();
                 for (i=0; i + H < C.nRows(); i += H){
@@ -366,6 +366,7 @@ namespace bla
             if(j<C.nCols()&&j+W>C.nCols()){
                 static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
                 tb.Start();
+                MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
                 B = largeB.Cols(j,C.nCols());
                 tb.Stop();
                 for (i=0; i + H <= C.nRows(); i += H){
@@ -398,7 +399,7 @@ namespace bla
                 size_t i2 = std::min(A.nRows(), i1 + ABLOCK_HEIGHT);
                 size_t j2 = std::min(A.nCols(), j1 + ABLOCK_WIDTH);
                 if (!j1)
-                    MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, false>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
+                    MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 else
                     MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
             }
@@ -409,7 +410,6 @@ namespace bla
     Matrix<T, ORD> InnerProduct(MatrixView<T, ORD> &m1, MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        res=0;
         MultMatMat(m1, m2, res);
         return res;
     }
