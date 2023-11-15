@@ -318,7 +318,7 @@ namespace bla
                     {
                         static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
                         ta.Start();
-                        A[i/H]= largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
+                        A[i/H].Cols(0,j2-j1) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
                         ta.Stop();
                     }
                     static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(firstW), { 0, 1, 0});
@@ -329,7 +329,7 @@ namespace bla
                 if(i<C.nRows()&&i+H>C.nRows()){
                     static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
                     ta.Start();
-                    A[i/H] = largeA.Rows(i1+i, i2).Cols(j1, j2);
+                    A[i/H].Rows(0,C.nRows()-i).Cols(0,j2-j1) = largeA.Rows(i1+i, i2).Cols(j1, j2);
                     ta.Stop();
 
                     static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(firstW), { 0, 1, 0});
