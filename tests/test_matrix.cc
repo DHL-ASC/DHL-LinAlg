@@ -86,7 +86,7 @@ int main()
         std::cout << "M*x = " << res << std::endl;
     }
     {
-    ASC_HPC::timeline = std::make_unique<ASC_HPC::TimeLine>("InnerProduct.trace");
+    
     int k = 200;
     bla::Matrix<double> m(k,k);
     bla::Matrix<double> n(k,k);
@@ -97,7 +97,7 @@ int main()
         }
     }
     
-    ASC_HPC::TaskManager tm;
+    ASC_HPC::TaskManager tm(true);
     tm.StartWorkers();
     auto start = std::chrono::high_resolution_clock::now();
     auto a = bla::InnerProduct(m,n);
