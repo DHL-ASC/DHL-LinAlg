@@ -97,7 +97,7 @@ int main()
         }
     }
     
-    ASC_HPC::TaskManager tm(true);
+    ASC_HPC::TaskManager tm(6,true);
     tm.StartWorkers();
     auto startt = std::chrono::high_resolution_clock::now();
     auto a = bla::InnerProduct(m,n);

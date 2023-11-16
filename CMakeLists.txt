@@ -3,18 +3,18 @@ project(ASC_bla)
 
 set (CMAKE_CXX_STANDARD 17)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
+# if(NOT CMAKE_BUILD_TYPE)
+#   set(CMAKE_BUILD_TYPE Release)
+# endif()
 
 include(CheckCXXCompilerFlag)
 
-CHECK_CXX_COMPILER_FLAG("-O3" COMPILER_OPT_OTHREE_SUPPORTED)
-if(COMPILER_OPT_OTHREE_SUPPORTED)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-endif()
+# CHECK_CXX_COMPILER_FLAG("-O3" COMPILER_OPT_OTHREE_SUPPORTED)
+# if(COMPILER_OPT_OTHREE_SUPPORTED)
+#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+# else()
+#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+# endif()
 
 CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
 if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
@@ -40,6 +40,8 @@ find_package(pybind11 CONFIG REQUIRED)
 
 add_executable (test_vector tests/test_vector.cc external_dependencies/HPC/src/simd.h)
 add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/taskmanager.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
+
+
 
 # target_sources(test_vector PUBLIC external_dependencies/HPC/src/simd.h)
 # target_sources(test_matrix PUBLIC external_dependencies/HPC/src/simd.h)

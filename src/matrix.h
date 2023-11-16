@@ -15,6 +15,8 @@
 #include <sstream>
 #include <string>
 
+#include <assert.h>
+
 #include <taskmanager.h>
 #include <timer.h>
 // namespace py = pybind11;
@@ -55,7 +57,7 @@ namespace bla
         template <typename TB>
         MatrixView &operator=(const MatExpr<TB> &m2)
         {
-            // std::cout<<"operator="<<std::endl;
+            std::cout<<"operator="<<std::endl;
             for (size_t i = 0; i < this->rows_; ++i)
                 for (size_t j = 0; j < this->cols_; j++)
                 {
@@ -67,7 +69,7 @@ namespace bla
         template <typename TB, ORDERING ORDB>
         MatrixView &operator=(const MatrixView<TB, ORDB> &m2)
         {
-            // std::cout<<"operator=MV"<<std::endl;
+            std::cout<<"operator=MV"<<std::endl;
             for (size_t i = 0; i < this->rows_; ++i)
                 for (size_t j = 0; j < this->cols_; j++)
                 {
@@ -281,16 +283,22 @@ namespace bla
                 else
                     sum[l] = ASC_HPC::SIMD<double, W>(0.0);
             }
-            for (size_t k = 0; k < Aw; ++k)
+            size_t k = 0;
+            for (; k < Aw-1; ++k)
             {
                 ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
 
                 for (size_t l = 0; l < H; ++l)
                     sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k * Adist + l)), y1, sum[l]);
             }
-            for (size_t l = 0; l < H; ++l)
+            for (; k < Aw; ++k)
             {
-                sum[l].Store(Cij + l * Cdist);
+                ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
+
+                for (size_t l = 0; l < H; ++l){
+                    sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k * Adist + l)), y1, sum[l]);
+                    sum[l].Store(Cij + l * Cdist);
+                }
             }
         }
     }
@@ -326,17 +334,17 @@ namespace bla
         }
 
         //sync threads before starting to work with cached Ablock
-        static ASC_HPC::Timer tk("Microkernel w/ cached Ablock", { 0, 1, 0});
-        tk.Start(0);
-        size_t j = W;
-
-        alignas(64) double memB[W * ABLOCK_HEIGHT];
+        
+        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+        { 
+            static ASC_HPC::Timer tk("Microkernel w/ cached Ablock", { 0, 1, 0});
+            tk.Start(0);
+            size_t j = W;
+            alignas(64) double memB[W * ABLOCK_HEIGHT];
 
         for (; j + W <= C.nCols(); j += W){
             MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
             B = largeB.Cols(j,j+W);
-            ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
-            { 
             size_t i;
             for (i=id*H; i + H < C.nRows(); i += H*numThreads){
                 MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
@@ -344,13 +352,10 @@ namespace bla
             if(i<C.nRows()&&i+H>C.nRows()){
                 (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             }
-            });
         }
         if(j<C.nCols()&&j+W>C.nCols()){
             MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
             B = largeB.Cols(j,C.nCols());
-            ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
-            { 
             size_t i;
             for (i=id*H; i + H <= C.nRows(); i += H*numThreads){
                 (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
@@ -358,9 +363,9 @@ namespace bla
             if(i<C.nRows()&&i+H>C.nRows()){
                 (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             }
-            });
-        } 
+        }
         tk.Stop();
+        }); 
     }
 
     template <size_t H, size_t W, bool INIT>
