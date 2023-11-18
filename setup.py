@@ -1,9 +1,15 @@
 from skbuild import setup
+import sys
 
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 _cmake_args = ["-DCMAKE_BUILD_TYPE=Release"]
+
+if('win32' in sys.platform):
+    _cmake_args += ['/arch:AVX2']
+
+
 
 test_deps = ["pytest", "numpy"]
 docs = ["sphinx", "myst-nb", "pandocfilters"]

@@ -3,8 +3,7 @@ import pickle
 import pytest
 import numpy as np
 
-from dhllinalg.bla import Matrix
-from dhllinalg.bla import Vector
+from dhllinalg.bla import Matrix, Vector, InnerProduct, ParallelComputing
 
 
 @pytest.fixture(name="v3")
@@ -29,6 +28,59 @@ def test_matrix_vector_multiplication(m3, v3):
     assert res[0] == pytest.approx(10, 1e-16)
     assert res[1] == pytest.approx(13, 1e-16)
     assert res[2] == pytest.approx(16, 1e-16)
+
+
+def matrix_matrix_multiplication(matrix_sizes, method):
+    matrix_size1 = matrix_sizes[0]
+    matrix_size2 = matrix_sizes[1]
+
+    m = Matrix(matrix_size1[0], matrix_size1[1])
+    n = Matrix(matrix_size2[0], matrix_size2[1])
+    for i in range(matrix_size1[0]):
+        for j in range(matrix_size1[1]):
+            m[i, j] = i + 2 * j
+
+    for i in range(matrix_size2[0]):
+        for j in range(matrix_size2[1]):
+            n[i, j] = 2 * i + 3 * j
+
+    numpy_m = np.asarray(m)
+    numpy_n = np.asarray(n)
+
+    c = Matrix(matrix_size1[0], matrix_size2[1])
+    d = Matrix(matrix_size2[0], matrix_size1[1])
+    if method == "normal":
+        c = m * n
+        d = n * m
+    elif method == "InnerProduct":
+        c = InnerProduct(m, n)
+        d = InnerProduct(n, m)
+    elif method == "InnerProductParallel":
+        with ParallelComputing():
+            c = InnerProduct(m, n)
+            d = InnerProduct(n, m)
+
+    assert np.array_equal(np.asarray(c), np.dot(numpy_m, numpy_n))
+    assert np.array_equal(np.asarray(d), np.dot(numpy_n, numpy_m))
+
+
+matrix_sizes = [
+    ((102, 314), (314, 102)),  # Test with 102x314 and 314x102 matrices
+    ((66, 34), (34, 66)),  # Test with 66x34 and 34x66 matrices
+    ((47, 179), (179, 47)),  # Test with 47x179 and 179x47 matrices
+    ((128, 17), (17, 128)),  # Test with 128x17 and 17x128 matrices
+    ((9, 83), (83, 9)),  # Test with 9x83 and 83x9 matrices
+    ((512, 1024), (1024, 512)),  # Test with 512x1024 and 1024x512 matrices
+]
+methods = ["normal", "InnerProduct", "InnerProductParallel"]
+matrix_size_and_methods = [
+    (size, method) for size in matrix_sizes for method in methods
+]
+
+
+@pytest.mark.parametrize("matrix_sizes, method", matrix_size_and_methods)
+def test_matrix_multiplication_with_various_sizes(matrix_sizes, method):
+    matrix_matrix_multiplication(matrix_sizes, method)
 
 
 def test_matrix_set_get(m3):
@@ -63,6 +115,9 @@ def test_matrix_slicing(m3):
     assert isinstance(y, Vector)
     assert len(y) == 2
     assert np.array_equal(sub_matrix, np.array([[0, 2], [1, 3]]))
+    n = Matrix(10, 5)
+    n[:, :] = 1
+    assert np.array_equal(np.asarray(n), np.ones((10, 5)))
 
 
 def test_matrix_buffer_and_transpose(m3):

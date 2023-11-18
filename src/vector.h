@@ -42,7 +42,8 @@ namespace bla
 		size_t Size() const { return size_; }
 		T &operator()(size_t i) { return data_[dist_ * i]; }
 		const T &operator()(size_t i) const { return data_[dist_ * i]; }
-
+		// const T *Data() const { return data_; }
+		T *Data() const { return data_; }
 		auto Range(size_t first, size_t next) const
 		{
 			return VectorView(next - first, dist_, data_ + first * dist_);

@@ -1,7 +1,11 @@
 #include <matrix.h>
 #include <vector.h>
+#include <chrono>
 
 #include <iostream>
+#include <taskmanager.h>
+
+using namespace std;
 
 int main()
 {
@@ -81,6 +85,54 @@ int main()
 
         std::cout << "M*x = " << res << std::endl;
     }
+    {
+    
+    int k = 200;
+    bla::Matrix<double> m(k,k);
+    bla::Matrix<double> n(k,k);
+    for(int i=0;i<k;++i){
+        for(int j=0;j<k;++j){
+            m(i,j) = i+j;
+            n(i,j) = 2*i+j;
+        }
+    }
+    
+    ASC_HPC::TaskManager tm(true);
+    tm.StartWorkers();
+    auto start = std::chrono::high_resolution_clock::now();
+    auto a = bla::InnerProduct(m,n);
+    auto end = std::chrono::high_resolution_clock::now();
+    tm.StopWorkers();
 
+    double time = std::chrono::duration<double, std::milli>(end-start).count();
+    cout << "a(0,0) = " << a(0,0) << endl;
+    cout <<" time = " << time 
+           << " ms, GFlops = " << (k*k*k)/time/1e6
+           << endl;
+    
+    }
 
+    
+    // cout << "\n\ntest InnerProduct:\n\n";
+    // {
+    //     int rm = 16;
+    //     int cm = 9;
+    //     int rn = 9;
+    //     int cn = 16;
+    //     bla::Matrix<double> m(rm,cm);
+    //     bla::Matrix<double> n(rn,cn);
+
+    //     for(int i=0;i<rm;++i){
+    //         for(int j=0;j<cn;++j){
+    //             m(i,j) = 1;
+    //         }
+    //     }
+    //     for(int i=0;i<rn;++i){
+    //         for(int j=0;j<cn;++j){
+    //             n(i,j) = 1;
+    //         }
+    //     }
+
+    //     cout << bla::InnerProduct(n,m) <<endl;
+    // }
 }
