@@ -20,7 +20,7 @@ Why use DHL-LinAlg?
 
 DHL-LinAlg is fast
 -------------------
-.. image:: ../img/speed.jpeg
+.. image:: ../img/speed.png
 
 DHL-LinAlg is easy to use
 -------------------------
