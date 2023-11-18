@@ -1,5 +1,5 @@
 ============
-Installation
+Contribute
 ============
 DHL-LinAlg can be installed directly via pip from PyPi:
 
@@ -15,4 +15,4 @@ or you can build from source
     cd DHL-LinAlg
     pip install . 
 
-Building from source on Windows requires Microsoft Visual Studio Build Tools.
+If you plan on contributing please follow 

@@ -3,42 +3,56 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to DHL-LinAlg documentation!
-====================================
 
-DHL-LinAlg is a simple linear algebra implementation in C++ providing classes such as **Vector** and **Matrix**.
+.. image:: ../img/dhl-linalg-banner-transparent.png
+
+
+DHL-LinAlg is a basic linear algebra package implementation in C++ providing classes such as **Vector** and **Matrix**.
 All classes are binded into python.
 
+License
+==============
+DHL-LinAlg is `Free Software <http://www.gnu.org/philosophy/free-sw.html>`_ licensed under the MIT license. It, in part, is based on 
+`ASC-bla <https://github.com/TUWien-ASC/ASC-bla>`_ and `ASC-HPC <https://github.com/TUWien-ASC/ASC-HPC>`_ which are also published under the MIT license.
 
-Quickstart
-===============
+Why use DHL-LinAlg?
+===================
 
-Installation can be done as follows:
+DHL-LinAlg is fast
+-------------------
+.. image:: ../img/speed.jpeg
+
+DHL-LinAlg is easy to use
+-------------------------
+..  code-block:: python
+
+   from dhllinalg.bla import Matrix, Vector, InnerProduct
+
+   m = Matrix(200,100)
+   n = Matrix(100,200)
+   for i in range(m.shape[0]):
+      for j in range(m.shape[1]):
+         m[i,j] = i + 2 * j
+      n[:,i] = i
+
+   w = InnerProduct(m, n)
+   print(w) 
+
+
+DHL-LinAlg can write trace files
+--------------------------------
+.. image:: ../img/trace.jpeg
+
+DHL-LinAlg is easy to install
+-----------------------------
 
 ..  code-block:: bash
 
    pip install dhllinalg 
 
 
-Afterwards you can import the library in python
-
-..  code-block:: python
-
-   from dhllinalg.bla import Matrix
-
-   m = Matrix(10,10)
-   for i in range(10):
-      for j in range(10):
-         m[i,j] = i + 2 * j
-
-   print(m)
 
 
-
-
-========
-Contents
-========
 
 .. toctree::
    ← Back to Github <https://github.com/DHL-ASC/DHL-LinAlg>
@@ -56,10 +70,3 @@ Contents
    :caption: Information:
 
    changelog/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
