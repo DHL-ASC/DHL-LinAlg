@@ -3,10 +3,6 @@ project(ASC_bla)
 
 set (CMAKE_CXX_STANDARD 17)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
 include(CheckCXXCompilerFlag)
 
 CHECK_CXX_COMPILER_FLAG("-O3" COMPILER_OPT_OTHREE_SUPPORTED)
