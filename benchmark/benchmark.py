@@ -147,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--override_all",
         action="store_true",
-        default=True,
+        default=False,
         help="Override all existing benchmarks (default: True)",
     )
 
