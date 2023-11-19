@@ -1,6 +1,6 @@
 # Benchmark
 
-DHL-LinAlg provides a simple cli to run benchmarks against Numpy and NGSolve. 
+DHL-LinAlg provides a simple cli to run benchmarks against Numpy. 
 In order to run all benchmarks, you will need to install all dependencies with
 ```bash
 pip install .["benchmark"]
@@ -11,7 +11,7 @@ To view all available options run
 ```bash
 $ python3 benchmark.py --help
 usage: benchmark.py [-h] [--initial_size INITIAL_SIZE] [--max_size MAX_SIZE] [--step_size STEP_SIZE] [--iterations_per_step ITERATIONS_PER_STEP]
-                    [--libraries [{dhl,numpy,ngsolve,all} ...]] [--override_all]
+                    [--libraries [{dhl,numpy,all} ...]] [--override_all]
 
 Benchmark for matrix matrix maultiplication
 
@@ -24,7 +24,7 @@ options:
                         Steps size (default: 24)
   --iterations_per_step ITERATIONS_PER_STEP
                         Iterations per step (default: 5)
-  --libraries [{dhl,numpy,ngsolve,all} ...]
+  --libraries [{dhl,numpy,all} ...]
                         List of libraries to run (default: all)
   --override_all        Override all existing benchmarks (default: True)
 ```

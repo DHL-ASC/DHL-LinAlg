@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
-import ngsolve as ngs
 from tqdm import tqdm
 
 import dhllinalg.bla as dhlbla
@@ -98,43 +97,6 @@ def run_numpy(
     }
 
 
-def run_ngsolve(
-    args,
-    iterations,
-    labels,
-    time_in_ns,
-    matrix_size,
-    gmacs,
-):
-    print("Running NGSolve")
-    loop = tqdm(
-        range(args.initial_size, args.max_size + args.step_size, args.step_size)
-    )
-    for size in loop:
-        m = ngs.Matrix(size, size)
-        n = ngs.Matrix(size, size)
-        for i in range(args.iterations_per_step):
-            start = time.time_ns()
-            c = m * n
-            end = time.time_ns()
-            t = end - start
-            iterations.append(i)
-            labels.append("NGSolve")
-            time_in_ns.append(t)
-            matrix_size.append(size)
-            gmacs.append(size**3 / t)
-            loop.set_postfix_str(f"Iteration: {i}")
-        loop.set_description(f"Matrix size {size}")
-
-    return {
-        "iterations": iterations,
-        "labels": labels,
-        "time_in_ns": time_in_ns,
-        "matrix_size": matrix_size,
-        "gmacs": gmacs,
-    }
-
-
 def main(args: argparse.Namespace):
     if args.override_all:
         print(f"Running with --override_all. All existing files will be overridden.")
@@ -179,7 +141,7 @@ if __name__ == "__main__":
         "--libraries",
         nargs="*",
         default=["all"],
-        choices=["dhl", "numpy", "ngsolve", "all"],
+        choices=["dhl", "numpy", "all"],
         help="List of libraries to run (default: all)",
     )
     parser.add_argument(
@@ -191,5 +153,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if "all" in args.libraries:
-        args.libraries = ["dhl", "numpy", "ngsolve"]
+        args.libraries = ["dhl", "numpy"]
     main(args)

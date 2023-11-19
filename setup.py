@@ -12,7 +12,7 @@ if "win32" in sys.platform:
 
 test_deps = ["pytest", "numpy"]
 docs = ["sphinx", "myst-nb", "pandocfilters"]
-benchmarks = ["numpy", "ngsolve"]
+benchmarks = ["numpy", "tqdm"]
 all_deps = test_deps + docs
 
 extras = {
