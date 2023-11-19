@@ -87,7 +87,7 @@ int main()
     }
     {
     
-    int k = 200;
+    size_t k = 200;
     bla::Matrix<double> m(k,k);
     bla::Matrix<double> n(k,k);
     for(int i=0;i<k;++i){
