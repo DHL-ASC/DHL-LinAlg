@@ -7,7 +7,7 @@
 .. image:: ../img/dhl-linalg-banner-transparent.png
 
 
-DHL-LinAlg is a basic linear algebra package implementation in C++ providing classes such as **Vector** and **Matrix**.
+A basic linear algebra implementation in C++ providing classes such as **Vector** and **Matrix**.
 All classes are binded into python.
 
 License
@@ -19,14 +19,14 @@ Why use DHL-LinAlg?
 ===================
 
 DHL-LinAlg is fast
--------------------
+~~~~~~~~~~~~~~~~~~
 .. image:: ../img/speed.png
 
 DHL-LinAlg is easy to use
 -------------------------
 ..  code-block:: python
 
-   from dhllinalg.bla import Matrix, Vector, InnerProduct
+   from dhllinalg.bla import Matrix, InnerProduct
 
    m = Matrix(200,100)
    n = Matrix(100,200)
@@ -38,6 +38,23 @@ DHL-LinAlg is easy to use
    w = InnerProduct(m, n)
    print(w) 
 
+
+DHL-LinAlg is compatible with other libraries
+-------------------------------------------------
+..  code-block:: python
+
+   from dhllinalg.bla import Matrix
+   import numpy as np
+
+   m = Matrix(223,17)
+   n = Matrix(17,223)
+   for i in range(m.nrows):
+      for j in range(m.ncols):
+         m[i,j] = i  * j
+      n[:,i] = 15-i
+
+   w = np.dot(np.asarray(m), np.asarray(n))
+   print(w) 
 
 DHL-LinAlg can write trace files
 --------------------------------
@@ -51,7 +68,7 @@ DHL-LinAlg is easy to install
    pip install dhllinalg 
 
 
-
+----
 
 
 .. toctree::
@@ -70,3 +87,5 @@ DHL-LinAlg is easy to install
    :caption: Information:
 
    changelog/index
+
+.. title:: DHL-LinAlg
