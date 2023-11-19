@@ -1,6 +1,12 @@
 # Benchmark
 
-DHL-LinAlg provides a simple cli to run benchmarks against Numpy and NGSolve. To view all available options run 
+DHL-LinAlg provides a simple cli to run benchmarks against Numpy and NGSolve. 
+In order to run all benchmarks, you will need to install all dependencies with
+```bash
+pip install .["benchmark"]
+```
+
+To view all available options run 
 
 ```bash
 $ python3 benchmark.py --help
