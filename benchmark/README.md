@@ -13,13 +13,13 @@ $ python3 benchmark.py --help
 usage: benchmark.py [-h] [--initial_size INITIAL_SIZE] [--max_size MAX_SIZE] [--step_size STEP_SIZE] [--iterations_per_step ITERATIONS_PER_STEP]
                     [--libraries [{dhl,numpy,all} ...]] [--override_all]
 
-Benchmark for matrix matrix maultiplication
+Benchmark for matrix matrix multiplication
 
 options:
   -h, --help            show this help message and exit
   --initial_size INITIAL_SIZE
-                        Initial size (default: 24)
-  --max_size MAX_SIZE   Maximum size (default: 1200)
+                        Initial matrix size (default: 24)
+  --max_size MAX_SIZE   Maximum matrix size (default: 1200)
   --step_size STEP_SIZE
                         Steps size (default: 24)
   --iterations_per_step ITERATIONS_PER_STEP
