@@ -119,13 +119,13 @@ def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Benchmark for matrix matrix maultiplication"
+        description="Benchmark for matrix matrix multiplication"
     )
     parser.add_argument(
-        "--initial_size", type=int, default=24, help="Initial size (default: 24)"
+        "--initial_size", type=int, default=24, help="Initial matrix size (default: 24)"
     )
     parser.add_argument(
-        "--max_size", type=int, default=1200, help="Maximum size (default: 1200)"
+        "--max_size", type=int, default=1200, help="Maximum matrix size (default: 1200)"
     )
     parser.add_argument(
         "--step_size", type=int, default=24, help="Steps size (default: 24)"
