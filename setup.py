@@ -9,7 +9,7 @@ _cmake_args = ["-DCMAKE_BUILD_TYPE=Release"]
 
 test_deps = ["pytest", "numpy"]
 docs = ["sphinx", "myst-nb", "pandocfilters"]
-benchmarks = ["numpy", "tqdm"]
+benchmarks = ["numpy", "tqdm", "pandas", "plotly", "matplotlib"]
 all_deps = test_deps + docs
 
 extras = {
