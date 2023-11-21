@@ -9,9 +9,9 @@ pip install .["benchmark"]
 To view all available options run 
 
 ```bash
-$ python3 benchmark.py --help
+$ python3 benchmark.py --help                                  
 usage: benchmark.py [-h] [--initial_size INITIAL_SIZE] [--max_size MAX_SIZE] [--step_size STEP_SIZE] [--iterations_per_step ITERATIONS_PER_STEP]
-                    [--libraries [{dhl,numpy,all} ...]] [--override_all]
+                    [--libraries [{dhl,dhl_parallel,numpy,all} ...]] [--overwrite_all]
 
 Benchmark for matrix matrix multiplication
 
@@ -24,9 +24,9 @@ options:
                         Steps size (default: 24)
   --iterations_per_step ITERATIONS_PER_STEP
                         Iterations per step (default: 5)
-  --libraries [{dhl,numpy,all} ...]
+  --libraries [{dhl,dhl_parallel,numpy,all} ...]
                         List of libraries to run (default: all)
-  --override_all        Override all existing benchmarks (default: True)
+  --overwrite_all       Overwrite all existing benchmarks (default: True)
 ```
 
 All benchmarks will be stored separately in a csv file. You can compare all benchmarks inside **benchmark_visualisation.ipynb**.
