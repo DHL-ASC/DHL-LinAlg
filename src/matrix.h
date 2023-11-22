@@ -478,7 +478,7 @@ namespace bla
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
         tf::Taskflow taskflow;
         size_t n = DHL_HPC::ParallelComputingTF::getNumThreads();
-        for (size_t i = 0; i < 1; i++)
+        for (size_t i = 0; i < n; i++)
         { 
             taskflow.emplace( 
             [i, n, &m1, &m2, &res] () { 
