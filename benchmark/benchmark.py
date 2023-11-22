@@ -35,22 +35,21 @@ def run_dhl(
     loop = tqdm(
         range(args.initial_size, args.max_size + args.step_size, args.step_size)
     )
-    with dhlbla.ParallelComputing(2):
-        for size in loop:
-            m = dhlbla.Matrix(size, size)
-            n = dhlbla.Matrix(size, size)
-            for i in range(args.iterations_per_step):
-                start = time.time_ns()
-                c = dhlbla.InnerProduct(m, n)
-                end = time.time_ns()
-                t = end - start
-                iterations.append(i)
-                labels.append("DHL 2 Core")
-                time_in_ns.append(t)
-                matrix_size.append(size)
-                gmacs.append(size**3 / t)
-                loop.set_postfix_str(f"Iteration: {i}")
-            loop.set_description(f"Matrix size {size}")
+    for size in loop:
+        m = dhlbla.Matrix(size, size)
+        n = dhlbla.Matrix(size, size)
+        for i in range(args.iterations_per_step):
+            start = time.time_ns()
+            c = dhlbla.InnerProduct(m, n)
+            end = time.time_ns()
+            t = end - start
+            iterations.append(i)
+            labels.append("DHL 1 Core")
+            time_in_ns.append(t)
+            matrix_size.append(size)
+            gmacs.append(size**3 / t)
+            loop.set_postfix_str(f"Iteration: {i}")
+        loop.set_description(f"Matrix size {size}")
 
     return {
         "iterations": iterations,
@@ -73,21 +72,22 @@ def run_dhl_parallel(
     loop = tqdm(
         range(args.initial_size, args.max_size + args.step_size, args.step_size)
     )
-    for size in loop:
-        m = dhlbla.Matrix(size, size)
-        n = dhlbla.Matrix(size, size)
-        for i in range(args.iterations_per_step):
-            start = time.time_ns()
-            c = dhlbla.InnerProduct(m, n)
-            end = time.time_ns()
-            t = end - start
-            iterations.append(i)
-            labels.append("DHL 1 Core")
-            time_in_ns.append(t)
-            matrix_size.append(size)
-            gmacs.append(size**3 / t)
-            loop.set_postfix_str(f"Iteration: {i}")
-        loop.set_description(f"Matrix size {size}")
+    with dhlbla.ParallelComputing(8):
+        for size in loop:
+            m = dhlbla.Matrix(size, size)
+            n = dhlbla.Matrix(size, size)
+            for i in range(args.iterations_per_step):
+                start = time.time_ns()
+                c = dhlbla.InnerProduct(m, n)
+                end = time.time_ns()
+                t = end - start
+                iterations.append(i)
+                labels.append("DHL 2 Core")
+                time_in_ns.append(t)
+                matrix_size.append(size)
+                gmacs.append(size**3 / t)
+                loop.set_postfix_str(f"Iteration: {i}")
+            loop.set_description(f"Matrix size {size}")
 
     return {
         "iterations": iterations,
