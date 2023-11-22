@@ -19,7 +19,7 @@ namespace bla
 {
     class ParallelComputing
     {
-        ASC_HPC::TaskManager t;
+        DHL_HPC::ParallelComputingTF t;
 
     public:
         ParallelComputing() : t() {}
@@ -36,7 +36,7 @@ namespace bla
         }
         static int getNumThreads()
         {
-            return ASC_HPC::TaskManager::getNumThreads();
+            return DHL_HPC::ParallelComputingTF::getNumThreads();
         }
     };
 }
@@ -61,7 +61,7 @@ PYBIND11_MODULE(bla, m)
         .def(py::init<size_t, bool>(), py::arg("nThreads"), py::arg("Trace"), "Set number of threads to \"nThreads\" and prepare to write trace file.")
         .def("__enter__", &ParallelComputing::Enter, "Start parallel computing (multithreading).")
         .def("__exit__", &ParallelComputing::Exit, "Stop parallel computing (multithreading).");
-    //.def("__timing__", &ASC_HPC::TaskManager::Timing);
+    //.def("__timing__", &DHL_HPC::TaskManager::Timing);
 
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),

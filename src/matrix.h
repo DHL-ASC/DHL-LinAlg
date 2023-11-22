@@ -15,7 +15,8 @@
 #include <sstream>
 #include <string>
 
-#include <taskmanager.h>
+// #include <taskmanager.h>
+#include <parallelcomputingtf.h>
 #include <timer.h>
 // namespace py = pybind11;
 
@@ -273,20 +274,20 @@ namespace bla
             return;
         else
         {
-            ASC_HPC::SIMD<double, W> sum[H];
+            DHL_HPC::SIMD<double, W> sum[H];
             for (size_t l = 0; l < H; ++l)
             {
                 if constexpr (!INIT)
-                    sum[l] = ASC_HPC::SIMD<double, W>(Cij + l * Cdist);
+                    sum[l] = DHL_HPC::SIMD<double, W>(Cij + l * Cdist);
                 else
-                    sum[l] = ASC_HPC::SIMD<double, W>(0.0);
+                    sum[l] = DHL_HPC::SIMD<double, W>(0.0);
             }
             for (size_t k = 0; k < Aw; ++k)
             {
-                ASC_HPC::SIMD<double, W> y1(Bj + k * Bdist);
+                DHL_HPC::SIMD<double, W> y1(Bj + k * Bdist);
 
                 for (size_t l = 0; l < H; ++l)
-                    sum[l] = ASC_HPC::FMA(ASC_HPC::SIMD<double, W>(*(Ai + k * Adist + l)), y1, sum[l]);
+                    sum[l] = DHL_HPC::FMA(DHL_HPC::SIMD<double, W>(*(Ai + k * Adist + l)), y1, sum[l]);
             }
             for (size_t l = 0; l < H; ++l)
             {
@@ -303,85 +304,87 @@ namespace bla
         size_t firstW = std::min(C.nCols(), W);
         alignas(64) double memB[W * ABLOCK_HEIGHT];
         MatrixView<double, RowMajor> B(largeB.nRows(), firstW, firstW, memB);
-        static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
-        tb.Start();
+        static DHL_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+        tb.Start(0);
         B = largeB.Cols(0,firstW); //j2<W?
         tb.Stop();
         //copy Ablock using all threads
-        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+
         {
             size_t j =0;
-            size_t i = id*H;
-            for (; i + H <= C.nRows(); i += H*numThreads){
+            size_t i = 0;
+            for (; i + H <= C.nRows(); i += H){
                 {
-                    static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
-                    ta.Start();
+                    static DHL_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                    ta.Start(0);
                     A[i/H].Cols(0,j2-j1) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
                     ta.Stop();
                 }
-                static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(firstW), { 0, 1, 0});
-                tk.Start();
+                static DHL_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(firstW), { 0, 1, 0});
+                tk.Start(0);
                 (*dispatch_MatMatMult[H][firstW][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
                 tk.Stop();
             }
             if(i<C.nRows()&&i+H>C.nRows()){
-                static ASC_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
-                ta.Start();
+                static DHL_HPC::Timer ta("pack A micropanel", { 1, 1, 0});
+                ta.Start(0);
                 A[i/H].Rows(0,C.nRows()-i).Cols(0,j2-j1) = largeA.Rows(i1+i, i2).Cols(j1, j2);
                 ta.Stop();
 
-                static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(firstW), { 0, 1, 0});
-                tk.Start();
+                static DHL_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(firstW), { 0, 1, 0});
+                tk.Start(0);
                 (*dispatch_MatMatMult[C.nRows()-i][firstW][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
                 tk.Stop();
             }
-        });
+        
+        }
         }
 
         //sync threads before starting to work with cached Ablock
-        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+
         { 
-        size_t j = id*W+W;
+        size_t j = W;
         size_t i;
 
         alignas(64) double memB[W * ABLOCK_HEIGHT];
 
-        for (; j + W <= C.nCols(); j += W*numThreads){
-            static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
-            tb.Start();
+        for (; j + W <= C.nCols(); j += W){
+            static DHL_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+            tb.Start(0);
             MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
             B = largeB.Cols(j,j+W);
             tb.Stop();
             for (i=0; i + H < C.nRows(); i += H){
-                static ASC_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(W), { 0, 1, 0});
-                tk.Start();
+                static DHL_HPC::Timer tk("Microkernel "+std::to_string(H)+"x"+std::to_string(W), { 0, 1, 0});
+                tk.Start(0);
                 MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
                 tk.Stop();
             }
 
-            static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(W), { 0, 1, 0});
-            tk.Start();
+            static DHL_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(W), { 0, 1, 0});
+            tk.Start(0);
             (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             tk.Stop();
         }
         if(j<C.nCols()&&j+W>C.nCols()){
-            static ASC_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
-            tb.Start();
+            static DHL_HPC::Timer tb("pack B micropanel", { 1, 0, 0});
+            tb.Start(0);
             MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
             B = largeB.Cols(j,C.nCols());
             tb.Stop();
             for (i=0; i + H <= C.nRows(); i += H){
-                static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
-                tk.Start();
+                static DHL_HPC::Timer tk("MicrokernelDi "+std::to_string(H)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
+                tk.Start(0);
                 //std::cout << A[i/H].Cols(0,j2-j1) << std::endl;
                 (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
                 tk.Stop();
             }
-            static ASC_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
-            tk.Start();
+            static DHL_HPC::Timer tk("MicrokernelDi "+std::to_string(C.nRows()-i)+"x"+std::to_string(C.nCols()-j), { 0, 1, 0});
+            tk.Start(0);
             (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             tk.Stop();
-        } }); 
+        } 
+        }
     }
 
     template <size_t H, size_t W, bool INIT>
@@ -394,11 +397,11 @@ namespace bla
         MatrixView<double, RowMajor> B(largeB.nRows(), firstW, firstW, memB);
         B = largeB.Cols(0,firstW); //j2<W?
         //copy Ablock using all threads
-        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
-        {
+        
+        
             size_t j =0;
-            size_t i = id*H;
-            for (; i + H <= C.nRows(); i += H*numThreads){
+            size_t i = 0;
+            for (; i + H <= C.nRows(); i += H){
                 A[i/H].Cols(0,j2-j1) = largeA.Rows(i1+i, i1+i+H).Cols(j1, j2);
             
                 (*dispatch_MatMatMult[H][firstW][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
@@ -407,33 +410,33 @@ namespace bla
                 A[i/H].Rows(0,C.nRows()-i).Cols(0,j2-j1) = largeA.Rows(i1+i, i2).Cols(j1, j2);
                 (*dispatch_MatMatMult[C.nRows()-i][firstW][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
             }
-        });
         }
         
         //sync threads before starting to work with cached Ablock
-        ASC_HPC::TaskManager::RunParallel([&](int id, int numThreads)
+
         { 
-        size_t j = id*W+W;
-        size_t i;
+            size_t j = W;
+            size_t i = 0;
 
-        alignas(64) double memB[W * ABLOCK_HEIGHT];
+            alignas(64) double memB[W * ABLOCK_HEIGHT];
 
-        for (; j + W <= C.nCols(); j += W*numThreads){
-            MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
-            B = largeB.Cols(j,j+W);
-            for (i=0; i + H < C.nRows(); i += H)
-                MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            for (; j + W <= C.nCols(); j += W){
+                MatrixView<double, RowMajor> B(largeB.nRows(), W, W, memB);
+                B = largeB.Cols(j,j+W);
+                for (i=0; i + H < C.nRows(); i += H)
+                    MultMatMatKernel<H, W, INIT>(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
 
-            (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                (*dispatch_MatMatMult[C.nRows()-i][W][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            }
+            if(j<C.nCols()&&j+W>C.nCols()){
+                MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
+                B = largeB.Cols(j,C.nCols());
+                for (i=0; i + H <= C.nRows(); i += H)
+                    (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+                
+                (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
+            }
         }
-        if(j<C.nCols()&&j+W>C.nCols()){
-            MatrixView<double, RowMajor> B(largeB.nRows(), C.nCols()-j, C.nCols()-j, memB);
-            B = largeB.Cols(j,C.nCols());
-            for (i=0; i + H <= C.nRows(); i += H)
-                (*dispatch_MatMatMult[H][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
-            
-            (*dispatch_MatMatMult[C.nRows()-i][C.nCols()-j][INIT])(j2-j1, &A[i/H](0,0), A[i/H].Dist(), &B(0, 0), B.Dist(), &C(i, j), C.Dist());
-        } });      
     }
 
     void MultMatMat(MatrixView<double, RowMajor> A, MatrixView<double, RowMajor> B, MatrixView<double, RowMajor> C)
@@ -453,14 +456,14 @@ namespace bla
                 size_t j2 = std::min(A.nCols(), j1 + ABLOCK_WIDTH);
                 if (!j1)
                 {
-                    if (ASC_HPC::TaskManager::writeTrace)
+                    if (DHL_HPC::ParallelComputingTF::trace)
                         MultMatMat2Timed<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                     else
                         MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 }   
                 else
                 {
-                    if (ASC_HPC::TaskManager::writeTrace)
+                    if (DHL_HPC::ParallelComputingTF::trace)
                         MultMatMat2Timed<KERNEL_HEIGHT, KERNEL_WIDTH, false>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                     else
                         MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, false>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
@@ -473,7 +476,18 @@ namespace bla
     Matrix<T, ORD> InnerProduct(MatrixView<T, ORD> &m1, MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        MultMatMat(m1, m2, res);
+        tf::Taskflow taskflow;
+        size_t n = DHL_HPC::ParallelComputingTF::getNumThreads();
+        for (size_t i = 0; i < 1; i++)
+        { 
+            taskflow.emplace( 
+            [i, n, &m1, &m2, &res] () { 
+                size_t first = (i*res.nRows()) / n;
+                size_t next = ((i+1)*res.nRows()) / n;
+                MultMatMat(m1.Rows(first,next), m2, res.Rows(first, next));
+            });   
+        }
+        DHL_HPC::ParallelComputingTF::executor->run(taskflow).wait(); 
         return res;
     }
 

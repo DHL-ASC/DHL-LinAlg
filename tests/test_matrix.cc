@@ -3,7 +3,7 @@
 #include <chrono>
 
 #include <iostream>
-#include <taskmanager.h>
+// #include <taskmanager.h>
 
 using namespace std;
 
@@ -90,6 +90,7 @@ int main()
     size_t k = 200;
     bla::Matrix<double> m(k,k);
     bla::Matrix<double> n(k,k);
+    bla::Matrix<double> a(k,k);
     for(int i=0;i<k;++i){
         for(int j=0;j<k;++j){
             m(i,j) = i+j;
@@ -97,12 +98,12 @@ int main()
         }
     }
     
-    ASC_HPC::TaskManager tm(true);
-    tm.StartWorkers();
+    // DHL_HPC::TaskManager tm(true);
+    // tm.StartWorkers();
     auto start = std::chrono::high_resolution_clock::now();
-    auto a = bla::InnerProduct(m,n);
+    a = bla::InnerProduct(m,n);
     auto end = std::chrono::high_resolution_clock::now();
-    tm.StopWorkers();
+    // tm.StopWorkers();
 
     double time = std::chrono::duration<double, std::milli>(end-start).count();
     cout << "a(0,0) = " << a(0,0) << endl;

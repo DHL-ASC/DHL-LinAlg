@@ -61,32 +61,32 @@ namespace bla
         typedef decltype(v1(0) * v2(0)) Tres;
         Tres r = 0;
 
-        ASC_HPC::SIMD<Tres, 16> res16(0.0);
+        DHL_HPC::SIMD<Tres, 16> res16(0.0);
         for (; v1.Size() > 15 && i < v1.Size() - 15; i += 16)
         {
-            ASC_HPC::SIMD<Tres, 16> s1(v1.Data() + i);
-            ASC_HPC::SIMD<Tres, 16> s2(v2.Data() + i);
-            res16 = ASC_HPC::FMA(s1, s2, res16);
+            DHL_HPC::SIMD<Tres, 16> s1(v1.Data() + i);
+            DHL_HPC::SIMD<Tres, 16> s2(v2.Data() + i);
+            res16 = DHL_HPC::FMA(s1, s2, res16);
         }
-        r += ASC_HPC::HSum(res16);
+        r += DHL_HPC::HSum(res16);
 
-        ASC_HPC::SIMD<Tres, 8> res8(0.0);
+        DHL_HPC::SIMD<Tres, 8> res8(0.0);
         for (; v1.Size() > 7 && i < v1.Size() - 7; i += 8)
         {
-            ASC_HPC::SIMD<Tres, 8> s1(v1.Data() + i);
-            ASC_HPC::SIMD<Tres, 8> s2(v2.Data() + i);
-            res8 = ASC_HPC::FMA(s1, s2, res8);
+            DHL_HPC::SIMD<Tres, 8> s1(v1.Data() + i);
+            DHL_HPC::SIMD<Tres, 8> s2(v2.Data() + i);
+            res8 = DHL_HPC::FMA(s1, s2, res8);
         }
-        r += ASC_HPC::HSum(res8);
+        r += DHL_HPC::HSum(res8);
 
-        ASC_HPC::SIMD<Tres, 4> res4(0.0);
+        DHL_HPC::SIMD<Tres, 4> res4(0.0);
         for (; v1.Size() > 3 && i < v1.Size() - 3; i += 4)
         {
-            ASC_HPC::SIMD<Tres, 4> s1(v1.Data() + i);
-            ASC_HPC::SIMD<Tres, 4> s2(v2.Data() + i);
-            res4 = ASC_HPC::FMA(s1, s2, res4);
+            DHL_HPC::SIMD<Tres, 4> s1(v1.Data() + i);
+            DHL_HPC::SIMD<Tres, 4> s2(v2.Data() + i);
+            res4 = DHL_HPC::FMA(s1, s2, res4);
         }
-        r += ASC_HPC::HSum(res4);
+        r += DHL_HPC::HSum(res4);
 
         for (; i < v1.Size(); i++)
             r += v1(i) * v2(i);

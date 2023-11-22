@@ -56,7 +56,7 @@ def matrix_matrix_multiplication(matrix_sizes, method):
         c = InnerProduct(m, n)
         d = InnerProduct(n, m)
     elif method == "InnerProductParallel":
-        with ParallelComputing():
+        with ParallelComputing(4, False):
             c = InnerProduct(m, n)
             d = InnerProduct(n, m)
 
