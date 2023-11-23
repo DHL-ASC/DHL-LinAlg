@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-// #include <taskmanager.h>
+#include <taskmanager.h>
 #include <parallelcomputingtf.h>
 #include <timer.h>
 // namespace py = pybind11;
@@ -456,14 +456,14 @@ namespace bla
                 size_t j2 = std::min(A.nCols(), j1 + ABLOCK_WIDTH);
                 if (!j1)
                 {
-                    if (DHL_HPC::ParallelComputingTF::trace)
+                    if (DHL_HPC::TaskManager::writeTrace)
                         MultMatMat2Timed<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                     else
                         MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, true>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                 }   
                 else
                 {
-                    if (DHL_HPC::ParallelComputingTF::trace)
+                    if (DHL_HPC::TaskManager::writeTrace)
                         MultMatMat2Timed<KERNEL_HEIGHT, KERNEL_WIDTH, false>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
                     else
                         MultMatMat2<KERNEL_HEIGHT, KERNEL_WIDTH, false>(Ablock, A, i1, i2, j1, j2, B.Rows(j1, j2), C.Rows(i1, i2));
@@ -477,7 +477,7 @@ namespace bla
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
 
-        DHL_HPC::ParallelComputingTF::RunParallel(
+        DHL_HPC::TaskManager::RunParallel(
             [&m1, &m2, &res] (size_t i, size_t n) { 
                 size_t first = (i*res.nRows()) / n;
                 size_t next = ((i+1)*res.nRows()) / n;

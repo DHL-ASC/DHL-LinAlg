@@ -19,7 +19,7 @@ namespace bla
 {
     class ParallelComputing
     {
-        DHL_HPC::ParallelComputingTF t;
+        DHL_HPC::TaskManager t;
 
     public:
         ParallelComputing() : t() {}
