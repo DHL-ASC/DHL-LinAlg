@@ -38,6 +38,8 @@ def run_dhl(
     for size in loop:
         m = dhlbla.Matrix(size, size)
         n = dhlbla.Matrix(size, size)
+        m[:, :] = 1
+        n[:, :] = 2
         for i in range(args.iterations_per_step):
             start = time.time_ns()
             c = dhlbla.InnerProduct(m, n)
@@ -76,6 +78,8 @@ def run_dhl_parallel(
         for size in loop:
             m = dhlbla.Matrix(size, size)
             n = dhlbla.Matrix(size, size)
+            m[:, :] = 1
+            n[:, :] = 2
             for i in range(args.iterations_per_step):
                 start = time.time_ns()
                 c = dhlbla.InnerProduct(m, n)
@@ -113,6 +117,8 @@ def run_numpy(
     for size in loop:
         m = np.zeros((size, size))
         n = np.zeros((size, size))
+        m[:, :] = 1
+        n[:, :] = 2
         for i in range(args.iterations_per_step):
             start = time.time_ns()
             c = np.dot(m, n)
