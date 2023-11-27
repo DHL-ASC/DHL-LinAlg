@@ -22,7 +22,7 @@ namespace bla
         DHL_HPC::ParallelComputingTF t;
 
     public:
-        ParallelComputing() : t(false) {}
+        ParallelComputing() : t() {}
         ParallelComputing(size_t nthreads) : t(nthreads) {}
         ParallelComputing(bool trace) : t(trace) {}
         ParallelComputing(size_t nthreads, bool trace) : t(nthreads, trace) {}

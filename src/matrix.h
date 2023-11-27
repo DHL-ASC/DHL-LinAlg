@@ -476,17 +476,13 @@ namespace bla
     Matrix<T, ORD> InnerProduct(MatrixView<T, ORD> &m1, MatrixView<T, ORD> &m2)
     {
         Matrix<T, RowMajor> res(m1.nRows(), m2.nCols());
-        size_t n = DHL_HPC::ParallelComputingTF::numThreads;
-        size_t h = std::min(res.nRows()/n, (size_t)ABLOCK_HEIGHT);
-        size_t nTasks = (res.nRows()+h-1)/h;
 
         DHL_HPC::ParallelComputingTF::RunParallel(
-            [&m1, &m2, &res, h] (size_t i, size_t n) { 
-                size_t first = i*h;
-                size_t next = std::min((i+1)*h,res.nRows());
-
+            [&m1, &m2, &res] (size_t i, size_t n) { 
+                size_t first = (i*res.nRows()) / n;
+                size_t next = ((i+1)*res.nRows()) / n;
                 MultMatMat(m1.Rows(first,next), m2, res.Rows(first, next));
-            }, nTasks); 
+            }); 
         return res;
     }
 
