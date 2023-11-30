@@ -84,6 +84,31 @@ namespace bla
                     (*this)(i, j) = scal;
             return *this;
         }
+
+        MatrixView& operator*=(T scal)
+		{
+			for (size_t i = 0; i < rows_; i++)
+                for (size_t j = 0; j < cols_; j++)
+                    (*this)(i, j) *= scal;
+            return *this;
+		}
+        MatrixView& operator+=(T scal)
+		{
+			for (size_t i = 0; i < rows_; i++)
+                for (size_t j = 0; j < cols_; j++)
+                    (*this)(i, j) += scal;
+            return *this;
+		}
+
+        template <typename TB>
+        MatrixView& operator+=(const MatrixView<TB> & m)
+		{
+			for (size_t i = 0; i < rows_; i++)
+                for (size_t j = 0; j < cols_; j++)
+                    (*this)(i, j) += m(i,j);
+            return *this;
+		}
+
         size_t Dist() const { return dist_; }
         auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
         size_t nRows() const { return rows_; }
@@ -144,6 +169,12 @@ namespace bla
                 return MatrixView<T, ColMajor>(nCols(), nRows(), nCols(), Data());
             else
                 return MatrixView<T, RowMajor>(nCols(), nRows(), nRows(), Data());
+        }
+
+        // Vector
+        auto Diag()
+        {
+            return VectorView<T, size_t>(rows_, dist_ + 1, data_);
         }
 
         void Pivot(size_t row, size_t *d, Matrix<T, ORD> *inv, Matrix<T, ORD> *cpy)

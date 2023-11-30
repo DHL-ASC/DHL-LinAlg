@@ -53,6 +53,13 @@ namespace bla
 		{
 			return VectorView<T, size_t>(size_ / slice, dist_ * slice, data_ + first * dist_);
 		}
+
+		VectorView& operator*=(T scal)
+		{
+			for (size_t i = 0; i < size_; i++)
+				data_[dist_ * i] *= scal;
+			return *this;
+		}
 	};
 
 	template <typename T>
