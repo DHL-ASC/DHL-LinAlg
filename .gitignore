@@ -8,7 +8,10 @@
 .vscode/*
 
 # examples timing output
-/examples/*.csv
+/benchmark/*.csv
+
+**/*.trace
+*.trace
 
 # Compiled Object files
 **/.DS_Store

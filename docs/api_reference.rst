@@ -14,3 +14,7 @@ dhllinalg.bla
     .. autoclass:: dhllinalg.bla.Matrix
         :special-members:
         :members:
+
+    .. autoclass:: dhllinalg.bla.ParallelComputing
+        :special-members: 
+        :members:

@@ -1,18 +1,21 @@
 from skbuild import setup
+import sys
 
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 _cmake_args = ["-DCMAKE_BUILD_TYPE=Release"]
 
+
 test_deps = ["pytest", "numpy"]
 docs = ["sphinx", "myst-nb", "pandocfilters"]
-
+benchmarks = ["numpy", "tqdm", "pandas", "plotly", "matplotlib"]
 all_deps = test_deps + docs
 
 extras = {
     "test": test_deps,
     "docs": docs,
+    "benchmark": benchmarks,
     "all": all_deps,
 }
 

@@ -24,4 +24,14 @@ int main()
     x.Slice(1, 5) = 10;
 
     std::cout << "x = " << x << std::endl;
+
+    {
+        bla::Vector<double> u(1024), v(1024);
+        for (size_t i = 0; i < u.Size(); i++)
+        {
+            u(i) = 1;
+            v(i) = 1;
+        }
+        std::cout << u*v <<std::endl;
+    }
 }
