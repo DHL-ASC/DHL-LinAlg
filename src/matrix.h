@@ -101,7 +101,7 @@ namespace bla
 		}
 
         template <typename TB>
-        MatrixView& operator+=(const MatrixView<TB> & m)
+        MatrixView& operator+=(const MatExpr<TB> &m)
 		{
 			for (size_t i = 0; i < rows_; i++)
                 for (size_t j = 0; j < cols_; j++)

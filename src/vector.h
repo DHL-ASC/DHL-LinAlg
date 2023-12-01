@@ -8,7 +8,7 @@
 namespace bla
 {
 
-	template <typename T, typename TDIST = std::integral_constant<size_t, 1>>
+	template <typename T=double, typename TDIST = std::integral_constant<size_t, 1>>
 	class VectorView : public VecExpr<VectorView<T, TDIST>>
 	{
 	protected:
@@ -60,9 +60,25 @@ namespace bla
 				data_[dist_ * i] *= scal;
 			return *this;
 		}
+
+		template <typename TB>
+		VectorView& operator+=(const VecExpr<TB> &v)
+		{
+			for (size_t i = 0; i < size_; i++)
+				data_[dist_ * i] += v(i);
+			return *this;
+		}
+
+		template <typename TB>
+		VectorView& operator-=(const VecExpr<TB> &v)
+		{
+			for (size_t i = 0; i < size_; i++)
+				data_[dist_ * i] -= v(i);
+			return *this;
+		}
 	};
 
-	template <typename T>
+	template <typename T=double>
 	class Vector : public VectorView<T>
 	{
 		typedef VectorView<T> BASE;
@@ -119,6 +135,12 @@ namespace bla
 		for (size_t i = 1; i < v.Size(); i++)
 			ost << ", " << v(i);
 		return ost;
+	}
+
+	template <typename T>
+	T L2NormSquared(const Vector<T> &v)
+	{
+		return v * v;
 	}
 
 }
