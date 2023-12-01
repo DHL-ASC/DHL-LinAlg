@@ -31,6 +31,13 @@ namespace bla
 			return *this;
 		}
 
+		VectorView &operator=(const VectorView &v2)
+		{
+			for (size_t i = 0; i < size_; i++)
+				data_[dist_ * i] = v2(i);
+			return *this;
+		}
+
 		VectorView &operator=(T scal)
 		{
 			for (size_t i = 0; i < size_; i++)
