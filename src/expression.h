@@ -193,7 +193,7 @@ namespace bla
             Tres r2 = 0;
             Tres r3 = 0;
             size_t k = 0;
-            for (; k < m2_.nRows() - 3; k += 4)
+            for (; k + 3 < m2_.nRows(); k += 4)
             {
                 r0 += m1_(i, k) * m2_(k, j);
                 r1 += m1_(i, k + 1) * m2_(k + 1, j);
