@@ -116,6 +116,12 @@ namespace bla
 			*this = v;
 		}
 
+		Vector (std::initializer_list<T> list)
+			: VectorView<T> (list.size(), new T[list.size()]) {
+			for (size_t i = 0; i < list.size(); i++)
+				data_[i] = list.begin()[i];
+		}
+
 		~Vector() { delete[] data_; }
 
 		using BASE::operator=;
