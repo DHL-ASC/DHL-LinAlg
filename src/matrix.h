@@ -33,6 +33,9 @@ namespace bla
     template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class Matrix;
 
+    template <typename T, typename TDIST = std::integral_constant<size_t, 1>>
+	class VectorView;
+
     template <size_t H, size_t W, bool INIT = false>
     inline void MultMatMatKernel(size_t, double *, size_t, double *, size_t, double *, size_t) noexcept;
 
