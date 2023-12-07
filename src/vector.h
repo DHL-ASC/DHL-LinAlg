@@ -5,6 +5,7 @@
 #include "shared_mat_vec.h"
 #include "matrix.h"
 #include "expression.h"
+#include <math.h>
 
 namespace bla
 {
@@ -245,7 +246,7 @@ namespace bla
 		Tres r = 0;
 		for (size_t i = 0; i < v.Size(); i++)
 			r += v(i) * v(i);
-		return std::sqrt(r);
+		return sqrt(r);
 	}
 
 }
