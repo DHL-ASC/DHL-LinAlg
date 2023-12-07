@@ -2,13 +2,16 @@
 #define FILE_VECTOR_H
 
 #include <iostream>
-
+#include "matrix.h"
 #include "expression.h"
 
 namespace bla
 {
 
-	template <typename T=double, typename TDIST = std::integral_constant<size_t, 1>>
+	// enum ORDERING;
+	template <typename T, ORDERING ORD>
+    class MatrixView;
+	template <typename T = double, typename TDIST>
 	class VectorView : public VecExpr<VectorView<T, TDIST>>
 	{
 	protected:
@@ -68,6 +71,13 @@ namespace bla
 			return *this;
 		}
 
+		VectorView& operator/=(T scal)
+		{
+			for (size_t i = 0; i < size_; i++)
+				data_[dist_ * i] /= scal;
+			return *this;
+		}
+
 		template <typename TB>
 		VectorView& operator+=(const VecExpr<TB> &v)
 		{
@@ -82,6 +92,11 @@ namespace bla
 			for (size_t i = 0; i < size_; i++)
 				data_[dist_ * i] -= v(i);
 			return *this;
+		}
+
+		auto AsMatrix(size_t rows, size_t cols) const
+		{
+			return MatrixView<T, ORDERING::RowMajor>(rows, cols, cols, data_);
 		}
 	};
 
@@ -116,7 +131,7 @@ namespace bla
 			*this = v;
 		}
 
-		Vector (std::initializer_list<T> list)
+		Vector(std::initializer_list<T> list)
 			: VectorView<T> (list.size(), new T[list.size()]) {
 			for (size_t i = 0; i < list.size(); i++)
 				data_[i] = list.begin()[i];
@@ -140,6 +155,71 @@ namespace bla
 		}
 	};
 
+	template <int SIZE, typename T = double>
+	class Vec : public VecExpr<Vec<SIZE,T>>
+	{
+	private:
+		T data[SIZE];
+
+	public:
+		Vec() { };
+		Vec(std::initializer_list<T> list) 
+		{
+			for (size_t i = 0; i < list.size(); i++)
+				data[i] = list.begin()[i];
+		}
+
+		Vec(T scal) 
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = scal;
+		}
+
+		Vec(const Vec &v2)
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = v2(i);
+		}
+
+		template <typename TB>
+		Vec(const VecExpr<TB> &v2)
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = v2(i);
+		}
+
+		template <typename TB>
+		Vec(const VectorView<TB> &v2)
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = v2(i);
+		}
+
+		Vec &operator=(const Vec &v2)
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = v2(i);
+			return *this;
+		}
+		Vec &operator=(Vec &&v2)
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = v2(i);
+			return *this;
+		}
+		Vec &operator=(const T &scal)
+		{
+			for (size_t i = 0; i < SIZE; i++)
+				data[i] = scal;
+			return *this;
+		}
+		auto Upcast() const { return *this; }
+		size_t Size() const { return SIZE; }
+		T &operator()(size_t i) { return data[i]; }
+		const T &operator()(size_t i) const { return data[i]; }
+		T *Data() const { return data; }
+	};
+
 	template <typename... Args>
 	std::ostream &operator<<(std::ostream &ost, const VectorView<Args...> &v)
 	{
@@ -154,6 +234,16 @@ namespace bla
 	T L2NormSquared(const Vector<T> &v)
 	{
 		return v * v;
+	}
+
+	template <typename T>
+	auto L2Norm(const VecExpr<T> &v)
+	{
+		typedef decltype(v(0)) Tres;
+		Tres r = 0;
+		for (size_t i = 0; i < v.Size(); i++)
+			r += v(i) * v(i);
+		return std::sqrt(r);
 	}
 
 }
