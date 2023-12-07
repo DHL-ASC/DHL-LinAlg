@@ -63,6 +63,33 @@ PYBIND11_MODULE(bla, m)
         .def("__exit__", &ParallelComputing::Exit, "Stop parallel computing (multithreading).");
     //.def("__timing__", &DHL_HPC::TaskManager::Timing);
 
+    py::class_<Vec<3, double>>(m, "Vec3D")
+        .def(py::init<>(),
+             "Create vector of length \"size\"")
+        .def("__len__", &Vec<3,double>::Size, "Return length of vector")
+        .def("__setitem__", [](Vec<3, double> &self, int i, double v)
+             {
+        if (i < 0)
+            i += self.Size();
+        if (i < 0 || i >= self.Size())
+            throw py::index_error("vector index out of range");
+        self(i) = v; },
+             py::arg("index"),
+             py::arg("value"),"Set value of item with index \"index\"")
+        .def("__getitem__", [](Vec<3, double> &self, int i)
+             {
+        if (i < 0)
+            i += self.Size();
+        if (i < 0 || i >= self.Size())
+            throw py::index_error("vector index out of range");
+        return self(i); },
+             py::arg("index"),"Get value of item with index \"index\"")
+        .def("__str__", [](const Vec<3, double> &self)
+             {
+        std::stringstream str;
+        str << self;
+        return str.str(); }, "Print vector elements.");
+
     py::class_<Vector<double>>(m, "Vector")
         .def(py::init<size_t>(),
              py::arg("size"), "Create vector of length \"size\"")
