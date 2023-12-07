@@ -2,16 +2,18 @@
 #define FILE_VECTOR_H
 
 #include <iostream>
+#include "shared_mat_vec.h"
 #include "matrix.h"
 #include "expression.h"
 
 namespace bla
 {
 
-	// enum ORDERING;
-	template <typename T, ORDERING ORD>
-    class MatrixView;
-	template <typename T = double, typename TDIST>
+	// template <typename T = double, typename TDIST = std::integral_constant<size_t, 1>>
+	// class VectorView;
+
+
+	template <typename T, typename TDIST>
 	class VectorView : public VecExpr<VectorView<T, TDIST>>
 	{
 	protected:

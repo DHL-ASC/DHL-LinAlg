@@ -10,6 +10,7 @@
 #include <memory> //for shared_ptr
 #include <exception>
 #include "expression.h"
+#include "shared_mat_vec.h"
 #include "vector.h"
 #include <simd.h>
 #include <sstream>
@@ -22,19 +23,12 @@
 
 namespace bla
 {
-    enum ORDERING
-    {
-        ColMajor,
-        RowMajor
-    };
 
-    template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
-    class MatrixView;
+    // template <typename T, ORDERING ORD>
+    // class MatrixView;
     template <typename T = double, ORDERING ORD = ORDERING::RowMajor>
     class Matrix;
 
-    template <typename T, typename TDIST = std::integral_constant<size_t, 1>>
-	class VectorView;
 
     template <size_t H, size_t W, bool INIT = false>
     inline void MultMatMatKernel(size_t, double *, size_t, double *, size_t, double *, size_t) noexcept;

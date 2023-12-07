@@ -34,7 +34,7 @@ list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_DIR}")
 find_package(pybind11 CONFIG REQUIRED)
 
 
-add_executable (test_vector tests/test_vector.cc external_dependencies/HPC/src/simd.h)
+add_executable (test_vector tests/test_vector.cc external_dependencies/HPC/src/parallelcomputingtf.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 add_executable (test_matrix tests/test_matrix.cc external_dependencies/HPC/src/parallelcomputingtf.cc external_dependencies/HPC/src/timer.cc external_dependencies/HPC/src/simd.h)
 
 # target_sources(test_vector PUBLIC external_dependencies/HPC/src/simd.h)
