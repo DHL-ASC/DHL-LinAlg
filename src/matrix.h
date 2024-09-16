@@ -110,6 +110,7 @@ namespace bla
         auto Upcast() const { return MatrixView(rows_, cols_, dist_, data_); }
         size_t nRows() const { return rows_; }
         size_t nCols() const { return cols_; }
+        size_t Dist() const { return dist_; }
         T *Data() { return data_; }
         T *Data() const { return data_; }
         T &operator()(size_t i) { return data_[i]; }
@@ -280,6 +281,15 @@ namespace bla
             return *this;
         }
     };
+
+    template <typename T, ORDERING ORD>
+    auto Transpose(MatrixView<T, ORD> &m)
+    {
+        if constexpr (ORD == RowMajor)
+            return MatrixView<T, ColMajor>(m.nCols(), m.nRows(), m.nCols(), m.Data());
+        else
+            return MatrixView<T, RowMajor>(m.nCols(), m.nRows(), m.nRows(), m.Data());
+    }
 
     template <typename... Args>
     std::ostream &operator<<(std::ostream &ost, const MatrixView<Args...> &m)

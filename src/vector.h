@@ -53,6 +53,7 @@ namespace bla
 
 		auto Upcast() const { return VectorView(size_, dist_, data_); }
 		size_t Size() const { return size_; }
+		size_t Dist() const { return dist_; }
 		T &operator()(size_t i) { return data_[dist_ * i]; }
 		const T &operator()(size_t i) const { return data_[dist_ * i]; }
 		// const T *Data() const { return data_; }
